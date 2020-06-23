@@ -1,0 +1,62 @@
+html {
+    width: 100%;
+    height: 100%;
+    background: #11e8bb; /* Old browsers */
+    background: -moz-linear-gradient(top,  #11e8bb 0%, #1a81c1 100%); /* FF3.6-15 */
+    background: -webkit-linear-gradient(top,  #11e8bb 0%,#1a81c1 100%); /* Chrome10-25,Safari5.1-6 */
+    background: linear-gradient(to bottom,  #11e8bb 0%,#1a81c1 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#11e8bb', endColorstr='#1a81c1',GradientType=0 ); /* IE6-9 */
+}
+
+html, body, canvas, #root {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+canvas { display: block; }
+
+div.center-items > * {
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+div.center-items > input {
+    outline: none;
+    height: 30px;
+    padding: 0px 8px;
+    font-size: 16px;
+    border: 0px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.75);
+}
+
+div.center-items > div.lobby-container {
+    background-color: rgba(255, 255, 255, 0.75);
+    border-radius: 4px;
+    width: 200px;
+    padding: 12px 8px;
+}
+div.center-items > div.lobby-container > div {
+    padding: 2px 10px;
+}
+div.center-items > div.lobby-container > button {
+    outline-color: lightseagreen;
+    font-size: 18px;
+    background: lightgreen;
+    color: white;
+    border: 0px;
+    border-radius: 4px;
+    margin: 12px 0px 0px 0px;
+    padding: 5px;
+    width: 100%;
+}
+div.center-items > div.lobby-container > button:hover {
+    background: lightseagreen;
+}

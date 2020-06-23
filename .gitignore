@@ -1,3 +1,13 @@
+# Others
+public/*
+
+# MacOSX
+*.DS_Store
+
+# Blender
+Blender/
+*.glb
+
 # Logs
 logs
 *.log
