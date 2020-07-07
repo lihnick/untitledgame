@@ -3,6 +3,15 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 const GameAsset = require('./GameAsset');
 
+/* ThreeJS Coordinate System
++X points to the right of the screen
+-X points to the left of the screen
++Y points to the top of the screen
+-Y points to the bottom of the screen
++Z points out of the screen (towards you)
+-Z points into the screen (away from you)
+*/
+
 function initThree(canvas) {
   let scene;
   let camera;
@@ -10,9 +19,17 @@ function initThree(canvas) {
   let renderer;
   let lights = [];
   let objects = []; 
+  let mixers = [];
+  let clock = new THREE.Clock();
 
   function animate() {
     requestAnimationFrame(animate);
+    
+    let delta = clock.getDelta();
+    mixers.forEach(item => {
+      item.update(delta);
+    });
+
     renderer.render(scene, camera);
   }
 
@@ -75,34 +92,44 @@ function initThree(canvas) {
         loader = new GLTFLoader();
         panControl();
 
-        api.loadGLB('./asset/PineTree.glb',
+        api.loadGLB('./asset/Pillar.glb',
           { 'x': 3 , 'y': 1, 'z': 5},
-          { 'x': 0, 'y': Math.random(), 'z': 0 },
+          { 'x': 0, 'y': 0, 'z': 0 },
           { 'x': 1, 'y': 1, 'z': 1 }
         );
+        
         api.loadGLB('./asset/Grassy.glb',
           { 'x': 3, 'y': 0, 'z': 5 },
           { 'x': 0, 'y': 0, 'z': 0 },
           { 'x': 1, 'y': 1, 'z': 1 }
         );
-
+        console.log(objects);
         animate();
         window.addEventListener('resize', onWindowResize, false);
       }
     },
     loadGLB: (glbFile, position, rotation, scale) => {
-      let mesh;
+      let model;
+      let animations;
       loader.load(
         // resourceURL
         glbFile,
         // called when resource is loaded
         function (glb) {
-          mesh = glb.scene;
-          mesh.position.set(position.x, position.y, position.z);
-          mesh.rotation.set(rotation.x, rotation.y, rotation.z);
-          mesh.scale.set(scale.x, scale.y, scale.z);
-          scene.add(mesh);
-          objects.push(mesh);
+          model = glb.scene;
+          animations = glb.animations;
+          model.position.set(position.x, position.y, position.z);
+          model.rotation.set(rotation.x, rotation.y, rotation.z);
+          model.scale.set(scale.x, scale.y, scale.z);
+          scene.add(model);
+          objects.push(glb);
+          if (animations.length > 0) {
+            let mixer = new THREE.AnimationMixer(model);
+            let rotateAnim = THREE.AnimationClip.findByName(animations, 'PillarAction');
+            mixer.clipAction(rotateAnim).play();
+            mixers.push(mixer);
+            console.log(model, animations, mixer, rotateAnim);
+          }
         },
         // called when loading is in progress
         function (xhr) {
@@ -114,13 +141,15 @@ function initThree(canvas) {
           console.log(error);
         }
       );
-      return mesh;
+      return model;
     },
     loadMap: (map) => {
       // need a function here to add a task that can span temporally to the animate function called by the requestAnimationFrame fucntion
       // rxjs queue? must be synchronous task!
       console.log(map);
-      objects.forEach(item => scene.remove(item));
+      mixers.forEach(item => item.stopAllAction());
+      mixers = [];
+      objects.forEach(item => scene.remove(item.scene));
       for (let x = 0; x < map['size'][0]; x++) {
         for (let z = 0; z < map['size'][1]; z++) {
           if (map['Terrain'][x][z] >= 0) {

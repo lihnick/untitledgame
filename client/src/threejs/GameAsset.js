@@ -7,6 +7,11 @@ const GameAsset = {
     ],
     'Surface': [
         {
+            'name': 'Pillar',
+            'asset': './asset/Pillar.glb',
+            'animate': ['PillarAction']
+        },
+        {
             'name': 'PineTree',
             'asset': './asset/PineTree.glb'
         }

@@ -12,6 +12,7 @@ class GameData extends React.Component {
     super(props);
     this.state = {
       isLoaded: false,
+      showLobby: true,
       threeEvent$: null,
       self: '',
       username: '',
@@ -65,7 +66,9 @@ class GameData extends React.Component {
         }
       } else if ('StartGame' === json['type'] && 'id' in json && 'map' in json) {
         console.log('Start Game by', json['id']);
-        this.state.threeEvent$.next(json);
+        this.setState({showLobby: false}, () => {
+          this.state.threeEvent$.next(json);
+        });
       }
       else {
         console.error('GameData Unknown Data:', json);
@@ -91,7 +94,7 @@ class GameData extends React.Component {
   render() {
     return (
       <React.Fragment>
-        { this.state.isLoaded && <Lobby {...this.props} networkService={this.networkService()}/> }
+        { this.state.isLoaded && this.state.showLobby && <Lobby {...this.props} networkService={this.networkService()}/> }
         { this.state.isLoaded && <Graphics {...this.props} event$={this.state.threeEvent$} /> }
       </React.Fragment>
     );
