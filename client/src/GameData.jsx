@@ -12,7 +12,9 @@ class GameData extends React.Component {
     super(props);
     this.state = {
       isLoaded: false,
-      showLobby: true,
+      gameStarted: false,
+      roundStarted: false,
+      roundNumber: null,
       threeEvent$: null,
       self: '',
       username: '',
@@ -20,6 +22,20 @@ class GameData extends React.Component {
     }
     this.networkService = this.networkService.bind(this);
     this.processMessage = this.processMessage.bind(this);
+    this.handleUserInput = this.handleUserInput.bind(this);
+  }
+
+  handleUserInput(key) {
+    console.log(key.keyCode);
+    if (this.state.gameStarted) {
+      let payload = {x: 0, z: 0};
+      if (key.keyCode === 119)  payload.x += 1; // w
+      if (key.keyCode === 115)  payload.x -= 1; // a
+      if (key.keyCode === 97)   payload.z -= 1; // s
+      if (key.keyCode === 100)  payload.z += 1; // d
+
+      this.props.socketInterface.playerMove(this.state.self, payload);
+    }
   }
 
   componentDidMount() {
@@ -33,11 +49,13 @@ class GameData extends React.Component {
             this.processMessage(data);
           }
         });
-      this.setState({
-        isLoaded: true
-      });
+      this.setState({ isLoaded: true });
+        document.addEventListener('keypress', this.handleUserInput);
     });
-    
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('keypress', this.handleUserInput);
   }
 
   processMessage(json) {
@@ -66,8 +84,14 @@ class GameData extends React.Component {
         }
       } else if ('StartGame' === json['type'] && 'id' in json && 'map' in json) {
         console.log('Start Game by', json['id']);
-        this.setState({showLobby: false}, () => {
+        this.setState({gameStarted: true}, () => {
           this.state.threeEvent$.next(json);
+        });
+      }
+      else if ('StartRound' === json['type'] && 'end' in json && 'round' in json) {
+        console.info('Round Started:', json);
+        this.setState({roundStarted: true}, () => {
+
         });
       }
       else {
@@ -94,7 +118,7 @@ class GameData extends React.Component {
   render() {
     return (
       <React.Fragment>
-        { this.state.isLoaded && this.state.showLobby && <Lobby {...this.props} networkService={this.networkService()}/> }
+        { this.state.isLoaded && !this.state.gameStarted && <Lobby {...this.props} networkService={this.networkService()}/> }
         { this.state.isLoaded && <Graphics {...this.props} event$={this.state.threeEvent$} /> }
       </React.Fragment>
     );

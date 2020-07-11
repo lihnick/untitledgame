@@ -1,5 +1,15 @@
 const GameAsset = {
+    'Players': [
+        {
+            'name': 'Wizard',
+            'asset': './asset/Wizard.glb'
+        }
+    ],
     'Terrain': [
+        {
+            'name': 'Spawn',
+            'asset': './asset/Spawn.glb'
+        },
         {
             'name': 'Grassy',
             'asset': './asset/Grassy.glb'
@@ -9,7 +19,7 @@ const GameAsset = {
         {
             'name': 'Pillar',
             'asset': './asset/Pillar.glb',
-            'animate': ['PillarAction']
+            'animate': 'PillarAction'
         },
         {
             'name': 'PineTree',

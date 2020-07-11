@@ -18,7 +18,9 @@ function initThree(canvas) {
   let loader;
   let renderer;
   let lights = [];
-  let objects = []; 
+  let terrain = [];
+  let surface = [];
+  let players = [];
   let mixers = [];
   let clock = new THREE.Clock();
 
@@ -92,28 +94,28 @@ function initThree(canvas) {
         loader = new GLTFLoader();
         panControl();
 
-        api.loadGLB('./asset/Pillar.glb',
-          { 'x': 3 , 'y': 1, 'z': 5},
+        api.loadGLB(surface, GameAsset['Surface'][0],
+        { 'x': 3 , 'y': 1, 'z': 5},
           { 'x': 0, 'y': 0, 'z': 0 },
           { 'x': 1, 'y': 1, 'z': 1 }
         );
         
-        api.loadGLB('./asset/Grassy.glb',
+        api.loadGLB(terrain, GameAsset['Terrain'][0],
           { 'x': 3, 'y': 0, 'z': 5 },
           { 'x': 0, 'y': 0, 'z': 0 },
           { 'x': 1, 'y': 1, 'z': 1 }
         );
-        console.log(objects);
+        console.log(terrain, surface);
         animate();
         window.addEventListener('resize', onWindowResize, false);
       }
     },
-    loadGLB: (glbFile, position, rotation, scale) => {
+    loadGLB: (ref, resource, position, rotation, scale) => {
       let model;
       let animations;
       loader.load(
         // resourceURL
-        glbFile,
+        resource['asset'],
         // called when resource is loaded
         function (glb) {
           model = glb.scene;
@@ -122,10 +124,10 @@ function initThree(canvas) {
           model.rotation.set(rotation.x, rotation.y, rotation.z);
           model.scale.set(scale.x, scale.y, scale.z);
           scene.add(model);
-          objects.push(glb);
-          if (animations.length > 0) {
+          ref.push(glb);
+          if ('animate' in resource) {
             let mixer = new THREE.AnimationMixer(model);
-            let rotateAnim = THREE.AnimationClip.findByName(animations, 'PillarAction');
+            let rotateAnim = THREE.AnimationClip.findByName(animations, resource['animate']);
             mixer.clipAction(rotateAnim).play();
             mixers.push(mixer);
             console.log(model, animations, mixer, rotateAnim);
@@ -143,26 +145,29 @@ function initThree(canvas) {
       );
       return model;
     },
-    loadMap: (map) => {
+    loadMap: (data) => {
       // need a function here to add a task that can span temporally to the animate function called by the requestAnimationFrame fucntion
       // rxjs queue? must be synchronous task!
-      console.log(map);
+      console.log(data);
       mixers.forEach(item => item.stopAllAction());
       mixers = [];
-      objects.forEach(item => scene.remove(item.scene));
-      for (let x = 0; x < map['size'][0]; x++) {
-        for (let z = 0; z < map['size'][1]; z++) {
-          if (map['Terrain'][x][z] >= 0) {
+      terrain.forEach(item => scene.remove(item.scene));
+      surface.forEach(item => scene.remove(item.scene));
+      for (let x = 0; x < data['map']['size'][0]; x++) {
+        for (let z = 0; z < data['map']['size'][1]; z++) {
+          if (data['map']['Terrain'][x][z] >= 0) {
             api.loadGLB(
-              GameAsset['Terrain'][map['Terrain'][x][z]]['asset'], 
+              terrain,
+              GameAsset['Terrain'][data['map']['Terrain'][x][z]], 
               {'x': 2*x, 'y': 0, 'z': 2*z },
               {'x': 0, 'y': 0, 'z': 0},
               {'x': 1, 'y': 1, 'z': 1}
             );
           }
-          if (map['Surface'][x][z] >= 0) {
+          if (data['map']['Surface'][x][z] >= 0) {
             api.loadGLB(
-              GameAsset['Surface'][map['Surface'][x][z]]['asset'],
+              surface,
+              GameAsset['Surface'][data['map']['Surface'][x][z]],
               { 'x': 2 * x, 'y': 1, 'z': 2 * z },
               { 'x': 0, 'y': 0, 'z': 0 },
               { 'x': 1, 'y': 1, 'z': 1 }
@@ -170,6 +175,18 @@ function initThree(canvas) {
           }
         }
       }
+      data['players'].forEach(player => {
+        api.loadGLB(
+          players,
+          GameAsset['Players'][0],
+          { 'x': 2 * player.position.x, 'y': 1, 'z': 2 * player.position.z },
+          { 'x': 0, 'y': 0, 'z': 0 },
+          { 'x': 1, 'y': 1, 'z': 1 }
+        )
+      });
+    },
+    movePlayer: (data) => {
+      
     }
   }
   return Object.seal(api);

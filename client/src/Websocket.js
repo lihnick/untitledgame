@@ -18,6 +18,14 @@ export default(function Websocket() {
         'type': 'StartGame',
         'username': name
       }));
+    },
+    playerMove: (id, vector) => {
+      console.log('Player Moving:', vector);
+      socket.send(JSON.stringify({
+        'type': 'PlayerMove',
+        'id': id,
+        'vector': vector
+      }));
     }
   }
   return Object.seal(api);

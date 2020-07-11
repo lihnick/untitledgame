@@ -9,8 +9,31 @@ const uuid = require('uuid');
 const cors = require('cors');
 const ws = require('ws');
 const app = express();
-const client = {};
 const port = process.env.PORT || 8000;
+
+/*
+    client = {
+        id1: { id1, username, websocket, position: {x1, z1} },
+        id2: { id2, username, websocket, position: {x2, z2} },
+        id3: { id3, username, websocket, position: {x3, z3} },
+        id4: { id4, username, websocket, position: {x4, z4} }
+    }
+*/
+let client = {};
+
+/*
+    There are no traps at the start of the game.
+    Player score points by moving to the end pillar.
+    Round X player move about setting traps for round X+1.
+    Player win by having the highest points after L rounds.
+    lobby = {
+        spawn: [{x1, z1}, {x2, z2}, {x3, z3}, {x4, z4}],
+        started: true/false,
+        round: 1...N,
+        roundEnd: Date.now() + 5 * 60 * 60
+    }
+*/
+let lobby = {};
 
 // Need to have the same instance of session parser in express and WebSocket server.
 const sessionParser = session({
@@ -52,6 +75,7 @@ wss.on('connection', (ws, req) => {
     }
 
     ws.on('message', (message) => {
+        // Check if message can be parse and valid format
         console.log(`User ${id} Sent`);
         let data;
         try {
@@ -62,6 +86,7 @@ wss.on('connection', (ws, req) => {
         }
         console.log(data);
         if (data && 'type' in data) {
+            // New Player joining will need to update current client with their data
             if ('Username' == data['type']) {
                 for (let key in client) {
                     // New clients need all other client info
@@ -89,18 +114,72 @@ wss.on('connection', (ws, req) => {
                     }
                 }
             }
-            if ('StartGame' == data['type']) {
+            // When a player clicks start game when in a lobby
+            else if ('StartGame' == data['type']) {
                 console.log('Start Game', GameLevel);
+                // Get a list of player ids for players that have joined the lobby
+                let playerIds = Object.keys(client)
+                    .filter(key => ('username' in client[key]))
+                    .map(key => client[key]['id']);
+                
+                lobby['spawn'] = [];
+                // Parse the spawn locations available for a given map
+                for (let x = 0; x < GameLevel['Forest']['size'][0]; x++) {
+                    for (let z = 0; z < GameLevel['Forest']['size'][1]; z++ ) {
+                        if (GameLevel['Forest']['Terrain'][x][z] === 0) {
+                            lobby['spawn'].push({'x': x, 'z': z});
+                        }
+                    }
+                }
+
+                // Set player spawn locations
+                for (let i = 0; i < lobby['spawn'].length && i < playerIds.length; i++) {
+                    client[playerIds[i]]['position'] = lobby['spawn'][i];
+                }
+                // lobby['spawn'].forEach((locations, index) => {
+                //     console.log(locations, index, playerIds[index], client[playerIds[index]]);
+                //     client[playerIds[index]]['position'] = locations;
+                // });
+
+                // Set initial data needed to start a game
                 for (let key in client) {
                     if ('username' in client[key]) {
                         client[key]['websocket'].send(JSON.stringify({
                             'type': 'StartGame',
                             'id': key,
-                            'map': GameLevel['Forest']
+                            'map': GameLevel['Forest'],
+                            'players': Object.keys(client)
+                                .filter(key => ('username' in client[key]))
+                                .map(key => ({
+                                    'id': client[key]['id'],
+                                    'position': client[key]['position']
+                                }))
                         }));
+
+                        if (!lobby['started']) {
+                            lobby['started'] = true;
+                            lobby['round'] = 1;
+                            lobby['roundEnd'] = Date.now() + 5 * 60 * 60 + 10000;
+                            // Call once to indicate start of the game
+                            setTimeout(() => {
+                                console.log('Starting Game Round:', lobby['round']);
+                                client[key]['websocket'].send(JSON.stringify({
+                                    'type': 'StartRound',
+                                    'round': lobby['round'],
+                                    'end': lobby['roundEnd']
+                                }));
+                            }, 10000);
+                        }
                     }
                 }
             }
+            else if ('PlayerMove' == data['type']) {
+                console.log('Player Move:', data);
+            } else {
+                console.log('Unrecognize data type:', data);
+            }
+        } else {
+            console.log('Unknown data format:', data);
         }
     });
 
@@ -116,6 +195,12 @@ wss.on('connection', (ws, req) => {
         }
         console.log(`Connection to ${id} closed.`);
         delete client[id];
+        if (Object.keys(client).length === 0) {
+            console.log('All Players have left, resetting Lobby variables');
+            lobby['spawn'] = [];
+            lobby['started'] = false;
+            lobby['round'] = 0;
+        }
         console.log(Object.keys(client).length);
     });
 

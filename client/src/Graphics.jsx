@@ -28,7 +28,7 @@ class Graphics extends React.Component {
   processEvent(event) {
     if (event && 'type' in event) {
       if ('StartGame' === event['type'] && 'id' in event && 'map' in event) {
-        this.state.three.loadMap(event['map']);
+        this.state.three.loadMap(event);
       } else {
         console.error('Graphics - Unknown Event:', event);
       }
