@@ -139,15 +139,23 @@ function initThree(canvas) {
         loader = new GLTFLoader();
         panControl();
 
-        api.loadGLB('surface', GameAsset['Surface'][0],
-          { 'x': 3 , 'y': 1, 'z': 5},
-          { 'x': 0, 'y': 0, 'z': 0 },
+        api.loadGLB(
+          {
+            'type': 'surface', 
+            'property': GameAsset['Surface'][0],
+            'position': { 'x': 3 , 'y': 1, 'z': 5},
+            'rotation': { 'x': 0, 'y': 0, 'z': 0 }
+          },
           glbLoadedCallback
         );
         
-        api.loadGLB('terrain', GameAsset['Terrain'][0],
-          { 'x': 3, 'y': 0, 'z': 5 },
-          { 'x': 0, 'y': 0, 'z': 0 },
+        api.loadGLB(
+          {
+            'type': 'terrain',
+            'property': GameAsset['Terrain'][0],
+            'position': { 'x': 3, 'y': 0, 'z': 5 },
+            'rotation': { 'x': 0, 'y': 0, 'z': 0 }
+          },
           glbLoadedCallback
         );
         console.log(terrain, surface);
@@ -155,17 +163,11 @@ function initThree(canvas) {
         window.addEventListener('resize', onWindowResize, false);
       }
     },
-    loadGLB: (type, property, position, rotation, callback) => {
-      callback = callback.bind({
-        'type': type,
-        'property': property,
-        'position': position,
-        'rotation': rotation
-      });
-
+    loadGLB: (context, callback) => {
+      callback = callback.bind(context);
       loader.load(
         // propertyURL
-        property['asset'],
+        context['property']['asset'],
         // called when property is loaded
         callback,
         // called when loading is in progress
@@ -189,36 +191,42 @@ function initThree(canvas) {
       for (let x = 0; x < data['map']['size'][0]; x++) {
         for (let z = 0; z < data['map']['size'][1]; z++) {
           if (data['map']['Terrain'][x][z] >= 0) {
+            let callbackContext = {
+              'type': 'terrain',
+              'property': GameAsset['Terrain'][data['map']['Terrain'][x][z]],
+              'position': { 'x': x, 'y': 0, 'z': z },
+              'rotation': { 'x': 0, 'y': 0, 'z': 0 }
+            }
             api.loadGLB(
-              'terrain',
-              GameAsset['Terrain'][data['map']['Terrain'][x][z]], 
-              {'x': x, 'y': 0, 'z': z },
-              {'x': 0, 'y': 0, 'z': 0},
+              callbackContext,
               glbLoadedCallback
             );
           }
           if (data['map']['Surface'][x][z] >= 0) {
+            let callbackContext = {
+              'type': 'surface',
+              'property': GameAsset['Surface'][data['map']['Surface'][x][z]],
+              'position': { 'x': x, 'y': 1, 'z': z },
+              'rotation': { 'x': 0, 'y': 0, 'z': 0 }
+            }
             api.loadGLB(
-              'surface',
-              GameAsset['Surface'][data['map']['Surface'][x][z]],
-              { 'x': x, 'y': 1, 'z': z },
-              { 'x': 0, 'y': 0, 'z': 0 },
+              callbackContext,
               glbLoadedCallback
             );
           }
         }
       }
       data['players'].forEach(player => {
-        /* TODO:
-          api.loadGLB needs some functionality to differ base on type of object (player/surface/terrain) being loaded.
-          research Java design patterns e.g. (Singleton, Decorator, Factory) for a possible design solution to hanle this.
-         */
-        players['id'] = {'id': player['id']};
+        players[player['id']] = null;
+        let callbackContext = {
+          'id': player['id'],
+          'type': 'player',
+          'property': GameAsset['Players'][0],
+          'position': { 'x': player.position.x, 'y': 1, 'z': player.position.z },
+          'rotation': { 'x': 0, 'y': 0, 'z': 0 },
+        }
         api.loadGLB(
-          'player',
-          GameAsset['Players'][0],
-          { 'x': player.position.x, 'y': 1, 'z': player.position.z },
-          { 'x': 0, 'y': 0, 'z': 0 },
+          callbackContext,
           glbLoadedCallback
         )
       });
@@ -226,6 +234,9 @@ function initThree(canvas) {
     },
     movePlayer: (data) => {
       console.log(data, players);
+      if (Math.abs(data.vector.x) > 0 && Math.abs(data.vector.z) === 0) {
+        
+      }
     }
   }
   return Object.seal(api);
