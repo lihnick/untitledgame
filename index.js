@@ -175,6 +175,10 @@ wss.on('connection', (ws, req) => {
             }
             else if ('PlayerMove' == data['type']) {
                 console.log('Player Move:', data);
+                for (let key in client) {
+                    client[key]['websocket'].send(JSON.stringify(data));
+                }
+                // will need to check if movement triggers any traps/collision
             } else {
                 console.log('Unrecognize data type:', data);
             }

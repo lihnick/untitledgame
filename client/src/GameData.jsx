@@ -14,6 +14,7 @@ class GameData extends React.Component {
       isLoaded: false,
       gameStarted: false,
       roundStarted: false,
+      roundTimer: null,
       roundNumber: null,
       threeEvent$: null,
       self: '',
@@ -27,7 +28,7 @@ class GameData extends React.Component {
 
   handleUserInput(key) {
     console.log(key.keyCode);
-    if (this.state.gameStarted) {
+    if (this.state.gameStarted && this.state.roundStarted) {
       let payload = {x: 0, z: 0};
       if (key.keyCode === 119)  payload.x += 1; // w
       if (key.keyCode === 115)  payload.x -= 1; // a
@@ -83,16 +84,21 @@ class GameData extends React.Component {
           this.setState({ users: removed });
         }
       } else if ('StartGame' === json['type'] && 'id' in json && 'map' in json) {
-        console.log('Start Game by', json['id']);
+        console.log('Start Game:', json);
         this.setState({gameStarted: true}, () => {
           this.state.threeEvent$.next(json);
         });
       }
       else if ('StartRound' === json['type'] && 'end' in json && 'round' in json) {
         console.info('Round Started:', json);
-        this.setState({roundStarted: true}, () => {
-
+        this.setState({
+          roundStarted: true,
+          roundNumber: json['round'],
+          roundTimer: json['end']
         });
+      }
+      else if ('PlayerMove' === json['type'] && 'id' in json && 'vector' in json) {
+        this.state.threeEvent$.next(json);
       }
       else {
         console.error('GameData Unknown Data:', json);

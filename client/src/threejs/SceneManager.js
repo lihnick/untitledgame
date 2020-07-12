@@ -13,6 +13,8 @@ const GameAsset = require('./GameAsset');
 */
 
 function initThree(canvas) {
+  // WORLD_UNIT is divided by the size of the object
+  let WORLD_UNIT = 1;
   let scene;
   let camera;
   let loader;
@@ -20,7 +22,7 @@ function initThree(canvas) {
   let lights = [];
   let terrain = [];
   let surface = [];
-  let players = [];
+  let players = {};
   let mixers = [];
   let clock = new THREE.Clock();
 
@@ -39,6 +41,49 @@ function initThree(canvas) {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  function glbLoadedCallback(glb) {
+    if (typeof this === 'undefined') {
+      console.error('')
+      return;
+    }
+    let model = glb.scene;
+    let animations = glb.animations;
+    model.position.set(
+      WORLD_UNIT * this.position.x,
+      WORLD_UNIT * this.position.y,
+      WORLD_UNIT * this.position.z
+    );
+    model.rotation.set(this.rotation.x, this.rotation.y, this.rotation.z);
+    const scale = WORLD_UNIT / this.property['size'];
+    model.scale.set(scale, scale, scale);
+    
+    scene.add(model);
+    if (this.type === 'player') {
+      players[this.id] = glb;
+      if ('animate' in this.property) {
+        console.log('Animation Found, to be implemented');
+      }
+    }
+    else if (this.type === 'surface') {
+      surface.push(glb);
+      if ('animate' in this.property) {
+        let mixer = new THREE.AnimationMixer(model);
+        let rotateAnim = THREE.AnimationClip.findByName(animations, this.property['animate']);
+        console.log(model, animations, mixer, rotateAnim);
+        mixer.clipAction(rotateAnim).play();
+        mixers.push(mixer);
+      }
+    }
+    else if (this.type === 'terrain') {
+      terrain.push(glb);
+      if ('animate' in this.property) {
+        console.log('Animation Found, to be implemented');
+      }
+    } else {
+      console.log('Cannot track unknown object type:', this);
+    }
   }
 
   function panControl() {
@@ -73,7 +118,7 @@ function initThree(canvas) {
 
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.z = 5;
-        camera.position.y = 5;
+        camera.position.y = 3;
         camera.position.x = 0;
         camera.rotateY(- Math.PI / 2 );
         camera.rotateX(- Math.PI / 6 );
@@ -94,56 +139,44 @@ function initThree(canvas) {
         loader = new GLTFLoader();
         panControl();
 
-        api.loadGLB(surface, GameAsset['Surface'][0],
-        { 'x': 3 , 'y': 1, 'z': 5},
+        api.loadGLB('surface', GameAsset['Surface'][0],
+          { 'x': 3 , 'y': 1, 'z': 5},
           { 'x': 0, 'y': 0, 'z': 0 },
-          { 'x': 1, 'y': 1, 'z': 1 }
+          glbLoadedCallback
         );
         
-        api.loadGLB(terrain, GameAsset['Terrain'][0],
+        api.loadGLB('terrain', GameAsset['Terrain'][0],
           { 'x': 3, 'y': 0, 'z': 5 },
           { 'x': 0, 'y': 0, 'z': 0 },
-          { 'x': 1, 'y': 1, 'z': 1 }
+          glbLoadedCallback
         );
         console.log(terrain, surface);
         animate();
         window.addEventListener('resize', onWindowResize, false);
       }
     },
-    loadGLB: (ref, resource, position, rotation, scale) => {
-      let model;
-      let animations;
+    loadGLB: (type, property, position, rotation, callback) => {
+      callback = callback.bind({
+        'type': type,
+        'property': property,
+        'position': position,
+        'rotation': rotation
+      });
+
       loader.load(
-        // resourceURL
-        resource['asset'],
-        // called when resource is loaded
-        function (glb) {
-          model = glb.scene;
-          animations = glb.animations;
-          model.position.set(position.x, position.y, position.z);
-          model.rotation.set(rotation.x, rotation.y, rotation.z);
-          model.scale.set(scale.x, scale.y, scale.z);
-          scene.add(model);
-          ref.push(glb);
-          if ('animate' in resource) {
-            let mixer = new THREE.AnimationMixer(model);
-            let rotateAnim = THREE.AnimationClip.findByName(animations, resource['animate']);
-            mixer.clipAction(rotateAnim).play();
-            mixers.push(mixer);
-            console.log(model, animations, mixer, rotateAnim);
-          }
-        },
+        // propertyURL
+        property['asset'],
+        // called when property is loaded
+        callback,
         // called when loading is in progress
         function (xhr) {
           // console.log((xhr.loaded / xhr.total * 100) + '% loaded');
         },
         // called when loading has errors
         function (error) {
-          console.error('GLB load error');
-          console.log(error);
+          console.error('GLB load error', error);
         }
       );
-      return model;
     },
     loadMap: (data) => {
       // need a function here to add a task that can span temporally to the animate function called by the requestAnimationFrame fucntion
@@ -157,36 +190,42 @@ function initThree(canvas) {
         for (let z = 0; z < data['map']['size'][1]; z++) {
           if (data['map']['Terrain'][x][z] >= 0) {
             api.loadGLB(
-              terrain,
+              'terrain',
               GameAsset['Terrain'][data['map']['Terrain'][x][z]], 
-              {'x': 2*x, 'y': 0, 'z': 2*z },
+              {'x': x, 'y': 0, 'z': z },
               {'x': 0, 'y': 0, 'z': 0},
-              {'x': 1, 'y': 1, 'z': 1}
+              glbLoadedCallback
             );
           }
           if (data['map']['Surface'][x][z] >= 0) {
             api.loadGLB(
-              surface,
+              'surface',
               GameAsset['Surface'][data['map']['Surface'][x][z]],
-              { 'x': 2 * x, 'y': 1, 'z': 2 * z },
+              { 'x': x, 'y': 1, 'z': z },
               { 'x': 0, 'y': 0, 'z': 0 },
-              { 'x': 1, 'y': 1, 'z': 1 }
+              glbLoadedCallback
             );
           }
         }
       }
       data['players'].forEach(player => {
+        /* TODO:
+          api.loadGLB needs some functionality to differ base on type of object (player/surface/terrain) being loaded.
+          research Java design patterns e.g. (Singleton, Decorator, Factory) for a possible design solution to hanle this.
+         */
+        players['id'] = {'id': player['id']};
         api.loadGLB(
-          players,
+          'player',
           GameAsset['Players'][0],
-          { 'x': 2 * player.position.x, 'y': 1, 'z': 2 * player.position.z },
+          { 'x': player.position.x, 'y': 1, 'z': player.position.z },
           { 'x': 0, 'y': 0, 'z': 0 },
-          { 'x': 1, 'y': 1, 'z': 1 }
+          glbLoadedCallback
         )
       });
+      console.log(players);
     },
     movePlayer: (data) => {
-      
+      console.log(data, players);
     }
   }
   return Object.seal(api);
