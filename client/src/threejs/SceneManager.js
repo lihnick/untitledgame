@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-
+console.log(THREE);
 const GameAsset = require('./GameAsset');
 
 /* ThreeJS Coordinate System
@@ -43,9 +43,76 @@ function initThree(canvas) {
     renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
+  function optimalCameraDirection() {
+    // Get the position of the end goal pillar
+    let pillarGoal = surface.filter(model => model['type'] === 'Pillar').map(model => (model['glb']['scene'].position));
+    if (pillarGoal.length > 0) {
+      pillarGoal = pillarGoal[0].clone();
+    } else {
+      console.error('Cannot find pillar');
+      return;
+    }
+    
+    // initialize a vector to store the accumulated value and not affect the position of current game spawn
+    let initialVec = new THREE.Vector3();
+    let spawns = terrain
+      .filter(model => model['type'] === 'Spawn')
+      .map(model => (model['glb']['scene'].position));
+    
+    let count = spawns.length;
+    let accumVector = spawns
+      .reduce((summedVector, currentVec) => (summedVector.add(currentVec)), initialVec);
+    // get the average location of all the spawn position
+    let averageSpawn = accumVector.clone().multiplyScalar(1/count);
+    
+    let direction = new THREE.Vector3();
+    direction.subVectors(averageSpawn, pillarGoal)
+    direction.y = 0;
+    direction.normalize();
+    if (Math.abs(direction.z) >= Math.abs(direction.x)) {
+      console.log('z-axis: ', direction);
+      return [0, 0, direction.round().z];
+    }
+    else {
+      console.log('x-axis: ', direction);
+      return [direction.round().x, 0, 0];
+    }
+
+    console.log(spawns, accumVector, averageSpawn, pillarGoal, direction);
+  }
+
+  function directionVector() {
+    if (camera) {
+      // The default camera is looking down its negative z-axis, create a point looking in the same direction
+      let forward = new THREE.Vector3(0, 0, -1);
+      // Apply the same camera rotation to this point
+      forward.applyQuaternion(camera.quaternion);
+      forward.y = 0; // Up Vector is not needed in this estimate
+      forward.normalize().round();
+      let up = camera.up;
+      // Calculate the right vector by taking the cross product of forward vector with the global up vector
+      let right = forward.clone();
+      right.cross(up);
+
+      let forwardAxis = Object.keys(forward).filter(axis => forward[axis] !== 0)[0];
+      let upAxis = Object.keys(up).filter(axis => up[axis] !== 0)[0];
+      let rightAxis = Object.keys(right).filter(axis => right[axis] !== 0)[0];
+      
+      let result = {
+        'forward': {'direction': forward[forwardAxis], 'axis': forwardAxis},
+        'up': {'direction': up[upAxis], 'axis': upAxis},
+        'right': {'direction': right[rightAxis], 'axis': rightAxis}
+      }
+      console.log('Direction:', forward, up, right, result);
+      return result;
+    } else {
+      console.log('Camera does not exists:', camera);
+    }
+  }
+
   function glbLoadedCallback(glb) {
     if (typeof this === 'undefined') {
-      console.error('')
+      console.error('Context not set:', this);
       return;
     }
     let model = glb.scene;
@@ -61,13 +128,13 @@ function initThree(canvas) {
     
     scene.add(model);
     if (this.type === 'player') {
-      players[this.id] = glb;
+      players[this.id] = {'type': this.property['name'], 'glb': glb};
       if ('animate' in this.property) {
         console.log('Animation Found, to be implemented');
       }
     }
     else if (this.type === 'surface') {
-      surface.push(glb);
+      surface.push({'type': this.property['name'], 'glb': glb});
       if ('animate' in this.property) {
         let mixer = new THREE.AnimationMixer(model);
         let rotateAnim = THREE.AnimationClip.findByName(animations, this.property['animate']);
@@ -77,7 +144,7 @@ function initThree(canvas) {
       }
     }
     else if (this.type === 'terrain') {
-      terrain.push(glb);
+      terrain.push({'type': this.property['name'], 'glb': glb});
       if ('animate' in this.property) {
         console.log('Animation Found, to be implemented');
       }
@@ -86,26 +153,27 @@ function initThree(canvas) {
     }
   }
 
-  function panControl() {
+  function panControl(directionContext) {
+    console.log('Direction Context: ', directionContext);
     window.addEventListener('keydown', function (key) {
       if (key.keyCode === 87) { // w
-        camera.position.x += 1;
+        camera.position[directionContext['forward']['axis']] += 1 * directionContext['forward']['direction'];
       }
       if (key.keyCode === 65) { // a
-        camera.position.z -= 1;
+        camera.position[directionContext['right']['axis']] -= 1 * directionContext['right']['direction'];
       }
       if (key.keyCode === 83) { // s
-        camera.position.x -= 1;
+        camera.position[directionContext['forward']['axis']] -= 1 * directionContext['forward']['direction'];
       }
       if (key.keyCode === 68) { // d
-        camera.position.z += 1;
+        camera.position[directionContext['right']['axis']] += 1 * directionContext['right']['direction'];
       }
     });
   }
 
   let api = {
     init: () => {
-      if (scene === undefined) {  
+      if (scene === undefined) {
         scene = new THREE.Scene();
         renderer = new THREE.WebGLRenderer({
           antialias: true,
@@ -123,7 +191,8 @@ function initThree(canvas) {
         camera.rotateY(- Math.PI / 2 );
         camera.rotateX(- Math.PI / 6 );
         scene.add(camera);
-
+        console.log(camera);
+        
         lights[0] = new THREE.AmbientLight(0x999999);
         scene.add(lights[0]);
         lights[1] = new THREE.DirectionalLight(0xffffff, 0.6);
@@ -135,9 +204,11 @@ function initThree(canvas) {
         scene.add(lights[1]);
         scene.add(lights[2]);
         scene.add(lights[3]);
-
+        
         loader = new GLTFLoader();
-        panControl();
+
+        let directionContext = directionVector();
+        panControl(directionContext);
 
         api.loadGLB(
           {
@@ -186,8 +257,12 @@ function initThree(canvas) {
       console.log(data);
       mixers.forEach(item => item.stopAllAction());
       mixers = [];
-      terrain.forEach(item => scene.remove(item.scene));
-      surface.forEach(item => scene.remove(item.scene));
+      terrain.forEach(item => scene.remove(item['glb'].scene));
+      surface.forEach(item => scene.remove(item['glb'].scene));
+      terrain = [];
+      surface = [];
+      players = {};
+
       for (let x = 0; x < data['map']['size'][0]; x++) {
         for (let z = 0; z < data['map']['size'][1]; z++) {
           if (data['map']['Terrain'][x][z] >= 0) {
@@ -216,6 +291,10 @@ function initThree(canvas) {
           }
         }
       }
+      setTimeout(() => {
+        optimalCameraDirection();
+      }, 5000);
+
       data['players'].forEach(player => {
         players[player['id']] = null;
         let callbackContext = {
@@ -235,7 +314,7 @@ function initThree(canvas) {
     movePlayer: (data) => {
       console.log(data, players);
       if (Math.abs(data.vector.x) > 0 && Math.abs(data.vector.z) === 0) {
-        
+
       }
     }
   }
