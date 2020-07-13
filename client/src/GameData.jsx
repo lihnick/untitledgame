@@ -16,32 +16,41 @@ class GameData extends React.Component {
       roundStarted: false,
       roundTimer: null,
       roundNumber: null,
-      threeEvent$: null,
+      socketEvent$: null,
+      directionContext: null,
       self: '',
       username: '',
       users: []
     }
+    this.eventService = this.eventService.bind(this);
     this.networkService = this.networkService.bind(this);
     this.processMessage = this.processMessage.bind(this);
     this.handleUserInput = this.handleUserInput.bind(this);
   }
 
   handleUserInput(key) {
-    console.log(key.keyCode);
-    if (this.state.gameStarted && this.state.roundStarted) {
+    if (this.state.gameStarted && this.state.roundStarted && this.state.directionContext) {
       let payload = {x: 0, z: 0};
-      if (key.keyCode === 119)  payload.x += 1; // w
-      if (key.keyCode === 115)  payload.x -= 1; // a
-      if (key.keyCode === 97)   payload.z -= 1; // s
-      if (key.keyCode === 100)  payload.z += 1; // d
-
+      if (key.keyCode === 87) { // w
+        payload[this.state.directionContext['forward']['axis']] += 1 * this.state.directionContext['forward']['direction'];
+      }  
+      if (key.keyCode === 65) { // a
+        payload[this.state.directionContext['right']['axis']] -= 1 * this.state.directionContext['right']['direction'];
+      }
+      if (key.keyCode === 83) { // s
+        payload[this.state.directionContext['forward']['axis']] -= 1 * this.state.directionContext['forward']['direction'];
+      }
+      if (key.keyCode === 68) { // d
+        payload[this.state.directionContext['right']['axis']] += 1 * this.state.directionContext['right']['direction'];
+      }
+      console.log("GameData Move:", payload);
       this.props.socketInterface.playerMove(this.state.self, payload);
     }
   }
 
   componentDidMount() {
     this.setState({
-      threeEvent$: new Subject()
+      socketEvent$: new Subject()
     }, () => {
       this.props.socket$
         // .pipe(filter(data => ('type' in data && ['AllUser', 'AddUser', 'DelUser'].some(type => (type === data['type'])))))
@@ -51,12 +60,12 @@ class GameData extends React.Component {
           }
         });
       this.setState({ isLoaded: true });
-        document.addEventListener('keypress', this.handleUserInput);
+        document.addEventListener('keydown', this.handleUserInput);
     });
   }
 
   componentWillUnmount() {
-    document.removeEventListener('keypress', this.handleUserInput);
+    document.removeEventListener('keydown', this.handleUserInput);
   }
 
   processMessage(json) {
@@ -86,7 +95,7 @@ class GameData extends React.Component {
       } else if ('StartGame' === json['type'] && 'id' in json && 'map' in json) {
         console.log('Start Game:', json);
         this.setState({gameStarted: true}, () => {
-          this.state.threeEvent$.next(json);
+          this.state.socketEvent$.next(json);
         });
       }
       else if ('StartRound' === json['type'] && 'end' in json && 'round' in json) {
@@ -98,14 +107,13 @@ class GameData extends React.Component {
         });
       }
       else if ('PlayerMove' === json['type'] && 'id' in json && 'vector' in json) {
-        this.state.threeEvent$.next(json);
+        this.state.socketEvent$.next(json);
       }
       else {
         console.error('GameData Unknown Data:', json);
       }
     }
   }
-
 
   networkService() {
     return {
@@ -121,11 +129,20 @@ class GameData extends React.Component {
     }
   }
 
+  eventService() {
+    return {
+      setDirectionContext: (context) => {
+        console.log("GameData Context", context);
+        this.setState({directionContext: context});
+      }
+    }
+  }
+
   render() {
     return (
       <React.Fragment>
         { this.state.isLoaded && !this.state.gameStarted && <Lobby {...this.props} networkService={this.networkService()}/> }
-        { this.state.isLoaded && <Graphics {...this.props} event$={this.state.threeEvent$} /> }
+        {this.state.isLoaded && <Graphics {...this.props} socketEvent$={this.state.socketEvent$} parentAPI={this.eventService()}/> }
       </React.Fragment>
     );
   }

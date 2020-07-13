@@ -19,7 +19,10 @@ class Graphics extends React.Component {
       three: initThree(this.threeRef.current)
     }, () => {
       this.state.three.init();
-      this.props.event$.subscribe({
+      let context = this.state.three.directionVector();
+      console.log(this.props);
+      this.props.parentAPI.setDirectionContext(context);
+      this.props.socketEvent$.subscribe({
         next: (data) => this.processEvent(data)
       });
     });

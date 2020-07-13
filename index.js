@@ -174,10 +174,23 @@ wss.on('connection', (ws, req) => {
                 }
             }
             else if ('PlayerMove' == data['type']) {
-                console.log('Player Move:', data);
-                for (let key in client) {
-                    client[key]['websocket'].send(JSON.stringify(data));
+                if (data['id'] in client) {
+                    client[data['id']].position.x += data['vector'].x;
+                    client[data['id']].position.z += data['vector'].z;
+                    for (let key in client) {
+                        client[key]['websocket'].send(JSON.stringify({
+                            'type': 'PlayerMove',
+                            'id': data['id'],
+                            'vector': client[data['id']].position
+                        }));
+                    }
+                } else {
+                    console.warn('Unknown id movement:', data);
                 }
+                // console.log('Player Move:', data);
+                // for (let key in client) {
+                //     client[key]['websocket'].send(JSON.stringify(data));
+                // }
                 // will need to check if movement triggers any traps/collision
             } else {
                 console.log('Unrecognize data type:', data);

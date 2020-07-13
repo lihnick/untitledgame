@@ -81,35 +81,6 @@ function initThree(canvas) {
     console.log(spawns, accumVector, averageSpawn, pillarGoal, direction);
   }
 
-  function directionVector() {
-    if (camera) {
-      // The default camera is looking down its negative z-axis, create a point looking in the same direction
-      let forward = new THREE.Vector3(0, 0, -1);
-      // Apply the same camera rotation to this point
-      forward.applyQuaternion(camera.quaternion);
-      forward.y = 0; // Up Vector is not needed in this estimate
-      forward.normalize().round();
-      let up = camera.up;
-      // Calculate the right vector by taking the cross product of forward vector with the global up vector
-      let right = forward.clone();
-      right.cross(up);
-
-      let forwardAxis = Object.keys(forward).filter(axis => forward[axis] !== 0)[0];
-      let upAxis = Object.keys(up).filter(axis => up[axis] !== 0)[0];
-      let rightAxis = Object.keys(right).filter(axis => right[axis] !== 0)[0];
-      
-      let result = {
-        'forward': {'direction': forward[forwardAxis], 'axis': forwardAxis},
-        'up': {'direction': up[upAxis], 'axis': upAxis},
-        'right': {'direction': right[rightAxis], 'axis': rightAxis}
-      }
-      console.log('Direction:', forward, up, right, result);
-      return result;
-    } else {
-      console.log('Camera does not exists:', camera);
-    }
-  }
-
   function glbLoadedCallback(glb) {
     if (typeof this === 'undefined') {
       console.error('Context not set:', this);
@@ -207,7 +178,7 @@ function initThree(canvas) {
         
         loader = new GLTFLoader();
 
-        let directionContext = directionVector();
+        let directionContext = api.directionVector();
         panControl(directionContext);
 
         api.loadGLB(
@@ -313,10 +284,42 @@ function initThree(canvas) {
     },
     movePlayer: (data) => {
       console.log(data, players);
-      if (Math.abs(data.vector.x) > 0 && Math.abs(data.vector.z) === 0) {
+      players[data['id']].glb.scene.position.x = data['vector'].x;
+      players[data['id']].glb.scene.position.z = data['vector'].z;
+    },
+    directionVector: () => {
+      if (camera) {
+        // The default camera is looking down its negative z-axis, create a point looking in the same direction
+        let forward = new THREE.Vector3(0, 0, -1);
+        if (typeof camera.getWorldDirection === 'function') {
+          camera.getWorldDirection(forward);
+        } else {
+          forward.applyQuaternion(camera.quaternion);
+        }
+        // Apply the same camera rotation to this point
+        console.log('forward: ', forward.x, forward.y, forward.z);
+        forward.y = 0; // Up Vector is not needed in this estimate
+        forward.normalize().round();
+        let up = camera.up;
+        // Calculate the right vector by taking the cross product of forward vector with the global up vector
+        let right = forward.clone();
+        right.cross(up);
 
-      }
-    }
+        let forwardAxis = Object.keys(forward).filter(axis => forward[axis] !== 0)[0];
+        let upAxis = Object.keys(up).filter(axis => up[axis] !== 0)[0];
+        let rightAxis = Object.keys(right).filter(axis => right[axis] !== 0)[0];
+
+        let result = {
+          'forward': { 'direction': forward[forwardAxis], 'axis': forwardAxis },
+          'up': { 'direction': up[upAxis], 'axis': upAxis },
+          'right': { 'direction': right[rightAxis], 'axis': rightAxis }
+        }
+        console.log('Direction:', forward, up, right, result);
+        return result;
+      } else {
+    console.log('Camera does not exists:', camera);
+  }
+}
   }
   return Object.seal(api);
 }
