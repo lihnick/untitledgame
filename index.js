@@ -155,22 +155,25 @@ wss.on('connection', (ws, req) => {
                                     'position': client[key]['position']
                                 }))
                         }));
-
-                        if (!lobby['started']) {
-                            lobby['started'] = true;
-                            lobby['round'] = 1;
-                            lobby['roundEnd'] = Date.now() + 5 * 60 * 60 + 10000;
-                            // Call once to indicate start of the game
-                            setTimeout(() => {
-                                console.log('Starting Game Round:', lobby['round']);
+                    }
+                }
+                if (!lobby['started']) {
+                    lobby['started'] = true;
+                    lobby['round'] = 1;
+                    lobby['roundEnd'] = Date.now() + 5 * 60 * 60 + 10000;
+                    // Call once to indicate start of the game
+                    setTimeout(() => {
+                        console.log('Starting Game Round:', lobby['round']);
+                        Object.keys(client).forEach(key => {
+                            if ('username' in client[key]) {
                                 client[key]['websocket'].send(JSON.stringify({
                                     'type': 'StartRound',
                                     'round': lobby['round'],
                                     'end': lobby['roundEnd']
                                 }));
-                            }, 10000);
-                        }
-                    }
+                            }
+                        });
+                    }, 10000);
                 }
             }
             else if ('PlayerMove' == data['type']) {
