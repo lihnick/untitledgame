@@ -1,6 +1,6 @@
 'use strict';
 
-const GameLevel = require('./map.js');
+const GameLevel = require('./constants.js');
 const session = require('express-session');
 const bodyParser = require('body-parser');
 const express = require('express');
@@ -124,9 +124,9 @@ wss.on('connection', (ws, req) => {
                 
                 lobby['spawn'] = [];
                 // Parse the spawn locations available for a given map
-                for (let x = 0; x < GameLevel['Forest']['size'][0]; x++) {
-                    for (let z = 0; z < GameLevel['Forest']['size'][1]; z++ ) {
-                        if (GameLevel['Forest']['Terrain'][x][z] === 0) {
+                for (let x = 0; x < GameLevel['ForestLevel']['size'][0]; x++) {
+                    for (let z = 0; z < GameLevel['ForestLevel']['size'][1]; z++ ) {
+                        if (GameLevel['ForestLevel']['Terrain'][x][z] === 0) {
                             lobby['spawn'].push({'x': x, 'z': z});
                         }
                     }
@@ -147,7 +147,7 @@ wss.on('connection', (ws, req) => {
                         client[key]['websocket'].send(JSON.stringify({
                             'type': 'StartGame',
                             'id': key,
-                            'map': GameLevel['Forest'],
+                            'map': GameLevel['ForestLevel'],
                             'players': Object.keys(client)
                                 .filter(key => ('username' in client[key]))
                                 .map(key => ({

@@ -20,7 +20,7 @@ class App extends React.Component {
     this.setState({
       socket$: new Subject()
     }, () => {
-      let { socket } = Websocket;
+      let { socket } = Websocket
       socket.onopen = (event) => {
         console.log('Connect Event:', event);
       }

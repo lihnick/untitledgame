@@ -1,7 +1,11 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import CameraControl from './CameraControl';
+
 console.log(THREE);
 const GameAsset = require('./GameAsset');
+
+// let CameraControl = require('./CameraControl');
 
 /* ThreeJS Coordinate System
 +X points to the right of the screen
@@ -25,6 +29,13 @@ function initThree(canvas) {
   let players = {};
   let mixers = [];
   let clock = new THREE.Clock();
+  let property = {
+    'CameraOffset': {
+      'x': 0,
+      'y': 3,
+      'z': 5
+    }
+  }
 
   function animate() {
     requestAnimationFrame(animate);
@@ -77,8 +88,6 @@ function initThree(canvas) {
       console.log('x-axis: ', direction);
       return [direction.round().x, 0, 0];
     }
-
-    console.log(spawns, accumVector, averageSpawn, pillarGoal, direction);
   }
 
   function glbLoadedCallback(glb) {
@@ -144,6 +153,7 @@ function initThree(canvas) {
 
   let api = {
     init: () => {
+      console.log(CameraControl);
       if (scene === undefined) {
         scene = new THREE.Scene();
         renderer = new THREE.WebGLRenderer({
@@ -156,9 +166,9 @@ function initThree(canvas) {
         renderer.gammaOutput = true;
 
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 5;
-        camera.position.y = 3;
-        camera.position.x = 0;
+        camera.position.z = property.CameraOffset.z;
+        camera.position.y = property.CameraOffset.y;
+        camera.position.x = property.CameraOffset.x;
         camera.rotateY(- Math.PI / 2 );
         camera.rotateX(- Math.PI / 6 );
         scene.add(camera);
@@ -184,7 +194,7 @@ function initThree(canvas) {
         api.loadGLB(
           {
             'type': 'surface', 
-            'property': GameAsset['Surface'][0],
+            'property': GameAsset['Test'][1],
             'position': { 'x': 3 , 'y': 1, 'z': 5},
             'rotation': { 'x': 0, 'y': 0, 'z': 0 }
           },
@@ -317,9 +327,10 @@ function initThree(canvas) {
         console.log('Direction:', forward, up, right, result);
         return result;
       } else {
-    console.log('Camera does not exists:', camera);
-  }
-}
+        console.log('Camera does not exists:', camera);
+      }
+    }
+
   }
   return Object.seal(api);
 }

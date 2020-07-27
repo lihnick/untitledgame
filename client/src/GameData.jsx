@@ -4,7 +4,9 @@ import { Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
 import Lobby from './Lobby';
-import Graphics from './Graphics';
+import UIContainer from './UIContainer';
+import GameGraphic from './GameGraphic';
+
 
 class GameData extends React.Component {
 
@@ -142,7 +144,8 @@ class GameData extends React.Component {
     return (
       <React.Fragment>
         { this.state.isLoaded && !this.state.gameStarted && <Lobby {...this.props} networkService={this.networkService()}/> }
-        {this.state.isLoaded && <Graphics {...this.props} socketEvent$={this.state.socketEvent$} parentAPI={this.eventService()}/> }
+        { this.state.isLoaded &&  <UIContainer {...this.props}/> }
+        {this.state.isLoaded && <GameGraphic {...this.props} socketEvent$={this.state.socketEvent$} parentAPI={this.eventService()}/> }
       </React.Fragment>
     );
   }

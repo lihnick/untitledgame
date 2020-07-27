@@ -1,4 +1,17 @@
 const GameAsset = {
+    'Test': [
+        {
+            'name': 'Test',
+            'asset': './asset/Pyramid.glb',
+            'animate': 'KeyAction',
+            'size': 2
+        },
+        {
+            'name': 'Test2',
+            'asset': './asset/ShapeKey.glb',
+            'size': 2
+        }
+    ],
     'Players': [
         {
             'name': 'Wizard',

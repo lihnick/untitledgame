@@ -2,7 +2,7 @@ import React from 'react';
 
 import initThree from './threejs/SceneManager';
 
-class Graphics extends React.Component {
+class GameGraphic extends React.Component {
 
   constructor(props) {
     super(props);
@@ -49,4 +49,4 @@ class Graphics extends React.Component {
   }
 }
 
-export default Graphics;
+export default GameGraphic;

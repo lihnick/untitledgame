@@ -1,7 +1,7 @@
 
 
 export default(function Websocket() {
-  const socket = new WebSocket('ws://localhost:8000');
+  const socket = new WebSocket(`ws://${window.location.hostname}:8000`);
 
   const api = {
     socket: socket,
