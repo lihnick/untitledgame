@@ -21,6 +21,7 @@ function initThree(canvas) {
   let WORLD_UNIT = 1;
   let scene;
   let camera;
+  let cameraController;
   let loader;
   let renderer;
   let lights = [];
@@ -41,6 +42,7 @@ function initThree(canvas) {
     requestAnimationFrame(animate);
     
     let delta = clock.getDelta();
+    cameraController.update();
     mixers.forEach(item => {
       item.update(delta);
     });
@@ -133,24 +135,6 @@ function initThree(canvas) {
     }
   }
 
-  function panControl(directionContext) {
-    console.log('Direction Context: ', directionContext);
-    window.addEventListener('keydown', function (key) {
-      if (key.keyCode === 87) { // w
-        camera.position[directionContext['forward']['axis']] += 1 * directionContext['forward']['direction'];
-      }
-      if (key.keyCode === 65) { // a
-        camera.position[directionContext['right']['axis']] -= 1 * directionContext['right']['direction'];
-      }
-      if (key.keyCode === 83) { // s
-        camera.position[directionContext['forward']['axis']] -= 1 * directionContext['forward']['direction'];
-      }
-      if (key.keyCode === 68) { // d
-        camera.position[directionContext['right']['axis']] += 1 * directionContext['right']['direction'];
-      }
-    });
-  }
-
   let api = {
     init: () => {
       console.log(CameraControl);
@@ -166,11 +150,8 @@ function initThree(canvas) {
         renderer.gammaOutput = true;
 
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = property.CameraOffset.z;
-        camera.position.y = property.CameraOffset.y;
-        camera.position.x = property.CameraOffset.x;
-        camera.rotateY(- Math.PI / 2 );
-        camera.rotateX(- Math.PI / 6 );
+        cameraController = CameraControl(camera, property);
+
         scene.add(camera);
         console.log(camera);
         
@@ -187,9 +168,6 @@ function initThree(canvas) {
         scene.add(lights[3]);
         
         loader = new GLTFLoader();
-
-        let directionContext = api.directionVector();
-        panControl(directionContext);
 
         api.loadGLB(
           {

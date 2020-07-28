@@ -1,15 +1,16 @@
 import * as THREE from 'three';
 
-export default(function CameraControl(camera, domElement, property) {
+export default(function CameraControl(camera, property) {
   
-  let cameraOffset = new THREE.Vector3(
-    property.CameraOffset.x || 0,
-    property.CameraOffset.y || 3,
-    property.CameraOffset.z || 5
-  );
+  let cameraOffset = new THREE.Vector3(0, 3, 5);
+  if ('CameraOffset' in property && 'x' in property.CameraOffset && 'y' in property.CameraOffset && 'z' in property.CameraOffset) {
+    cameraOffset.x = property.CameraOffset.x;
+    cameraOffset.y = property.CameraOffset.y;
+    cameraOffset.z = property.CameraOffset.z;
+  }
 
   let enabled = true;
-  let panSpeed = 1.0;
+  let panSpeed = 10;
 
   let isTrackingPlayer = false;
   let trackingObj = null;
@@ -29,6 +30,12 @@ export default(function CameraControl(camera, domElement, property) {
   let forwardVector = null;
   let rightVector = null;
   let upVector = null;
+  let prevTime = performance.now();
+  let velocity = new THREE.Vector3();
+  let isMoving = {
+    'forward': 0,
+    'right': 0
+  }
 
   function updateDirectionVector() {
     // The default camera is looking down its negative z-axis, create a point looking in the same direction
@@ -55,57 +62,75 @@ export default(function CameraControl(camera, domElement, property) {
   }
 
   function handleKeyDown(event) {
+    console.log('key:', event.keyCode);
     if (!enabled) return;
-    let needUpdate = false;
     switch (event.keyCode) {
       case KEYS.ArrowUp:
       case KEYS.KeyW:
-        panCamera(forwardVector, 1);
-        needUpdate = true;
+        isMoving.forward = 1;
         break;
       case KEYS.ArrowLeft:
       case KEYS.KeyA:
-        panCamera(rightVector, -1);
-        needUpdate = true;
+        isMoving.right = -1;
         break;
       case KEYS.ArrowDown:
       case KEYS.KeyS:
-        panCamera(forwardVector, -1);
-        needUpdate = true;
+        isMoving.forward = -1;
         break;
       case KEYS.ArrowRight:
       case KEYS.KeyD:
-        panCamera(rightVector, 1);
-        needUpdate = true;
+        isMoving.right = 1;
         break;
     }
-    if (needUpdate) {
+  }
 
+  function handleKeyUp(event) {
+    if (!enabled) return;
+    switch (event.keyCode) {
+      case KEYS.ArrowUp:
+      case KEYS.KeyW:
+      case KEYS.ArrowDown:
+      case KEYS.KeyS:
+        isMoving.forward = 0;
+        break;
+      case KEYS.ArrowLeft:
+      case KEYS.KeyA:
+      case KEYS.ArrowRight:
+      case KEYS.KeyD:
+        isMoving.right = 0;
+        break;
     }
   }
 
-  function panCamera(deltaVector, directionUnit) {
-    let offset = deltaVector.clone();
-    if (camera.isPerspectiveCamera) {
-      offset.multiplyScalar(directionUnit * panSpeed);
-      camera.position.add(offset);
-    } else {
-      console.log('Camera is not a perspective camera:', camera);
-    }
-  }
-
+  console.log('init camera');
+  window.addEventListener('keydown', handleKeyDown, false);
+  window.addEventListener('keyup', handleKeyUp, false);
+  camera.position.x = cameraOffset.x;
+  camera.position.y = cameraOffset.y;
+  camera.position.z = cameraOffset.z;
+  camera.rotateY(- Math.PI / 2);
+  camera.rotateX(- Math.PI / 6);
   updateDirectionVector();
-  domElement.addEventListener('keydown', handleKeyDown, false);
 
   let api = {
     update: () => {
+      // move camera smoothly based on user's performace
+      let time = performance.now();
+      let delta = (time - prevTime) / 1000;
 
+      velocity.set(0, 0, 0);
+      velocity.add(forwardVector.clone().multiplyScalar(isMoving.forward));
+      velocity.add(rightVector.clone().multiplyScalar(isMoving.right));
+      velocity.normalize().multiplyScalar(panSpeed * delta);
+
+      camera.position.add(velocity);
+      prevTime = time;
     },
     lookAtOnce: (target) => {
 
     },
     clearListener: () => {
-      domElement.removeEventListener('keydown', handleKeyDown, false);
+      window.removeEventListener('keydown', handleKeyDown, false);
     }
   }
 
