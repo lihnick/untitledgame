@@ -3,17 +3,17 @@ import * as THREE from 'three';
 export default(function CameraControl(camera, property) {
   
   let cameraOffset = new THREE.Vector3(0, 3, 5);
-  if ('CameraOffset' in property && 'x' in property.CameraOffset && 'y' in property.CameraOffset && 'z' in property.CameraOffset) {
-    cameraOffset.x = property.CameraOffset.x;
-    cameraOffset.y = property.CameraOffset.y;
-    cameraOffset.z = property.CameraOffset.z;
+  if ('cameraOffset' in property && 'x' in property.cameraOffset && 'y' in property.cameraOffset && 'z' in property.cameraOffset) {
+    cameraOffset.x = property.cameraOffset.x;
+    cameraOffset.y = property.cameraOffset.y;
+    cameraOffset.z = property.cameraOffset.z;
   }
 
   let enabled = true;
   let panSpeed = 10;
-
-  let isTrackingPlayer = false;
-  let trackingObj = null;
+  if ('panSpeed' in property) {
+    panSpeed = property.panSpeed;
+  }
 
   let KEYS = {
     'ArrowUp': 38,
@@ -34,9 +34,11 @@ export default(function CameraControl(camera, property) {
   let velocity = new THREE.Vector3();
   let isMoving = {
     'forward': 0,
-    'right': 0
+    'right': 0,
+    'up': 0
   }
 
+  // Call this function everytime camera rotation is updated
   function updateDirectionVector() {
     // The default camera is looking down its negative z-axis, create a point looking in the same direction
     let forward = new THREE.Vector3(0, 0, -1);
@@ -62,7 +64,6 @@ export default(function CameraControl(camera, property) {
   }
 
   function handleKeyDown(event) {
-    console.log('key:', event.keyCode);
     if (!enabled) return;
     switch (event.keyCode) {
       case KEYS.ArrowUp:
@@ -102,18 +103,18 @@ export default(function CameraControl(camera, property) {
     }
   }
 
-  console.log('init camera');
+  console.log('initialize camera control');
   window.addEventListener('keydown', handleKeyDown, false);
   window.addEventListener('keyup', handleKeyUp, false);
   camera.position.x = cameraOffset.x;
   camera.position.y = cameraOffset.y;
   camera.position.z = cameraOffset.z;
-  camera.rotateY(- Math.PI / 2);
-  camera.rotateX(- Math.PI / 6);
-  updateDirectionVector();
+  camera.lookAt(3, 0, 5);
+  updateDirectionVector(); 
 
   let api = {
     update: () => {
+      if (!enabled) return;
       // move camera smoothly based on user's performace
       let time = performance.now();
       let delta = (time - prevTime) / 1000;
@@ -126,15 +127,26 @@ export default(function CameraControl(camera, property) {
       camera.position.add(velocity);
       prevTime = time;
     },
-    lookAtOnce: (target) => {
-
-    },
-    clearListener: () => {
+    disableControl: (player) => {
+      // disable camera panning via keyboard inputs
+      enabled = false;
       window.removeEventListener('keydown', handleKeyDown, false);
+      window.removeEventListener('keyup', handleKeyUp, false);
+      
+      // camera position jump to player plus some offset (3rd person offset)
+      let position = player.position.clone();
+      position.add(cameraOffset);
+      camera.set(position.x, position.y, position.z);
+      
+      // camera rotate to look at player, position updates based on player location
+      camera.lookAt(player.position);
+    },
+    enableControl: () => {
+      enabled = true;
+      window.addEventListener('keydown', handleKeyDown, false);
+      window.addEventListener('keyup', handleKeyUp, false);
     }
   }
 
   return api;
 });
-
-// module.exports = CameraControl;
