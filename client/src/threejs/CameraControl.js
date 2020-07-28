@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 
-export default(function CameraControl(camera, property) {
+export default (function CameraControl(camera, domElement, property) {
   
+  let canvas = domElement;
   let cameraOffset = new THREE.Vector3(0, 3, 5);
   if ('cameraOffset' in property && 'x' in property.cameraOffset && 'y' in property.cameraOffset && 'z' in property.cameraOffset) {
     cameraOffset.x = property.cameraOffset.x;
@@ -103,9 +104,13 @@ export default(function CameraControl(camera, property) {
     }
   }
 
+  if (!(canvas instanceof HTMLCanvasElement)) {
+    canvas = document.getElementById('canvas');
+  }
+  canvas.focus();
   console.log('initialize camera control');
-  window.addEventListener('keydown', handleKeyDown, false);
-  window.addEventListener('keyup', handleKeyUp, false);
+  canvas.addEventListener('keydown', handleKeyDown, false);
+  canvas.addEventListener('keyup', handleKeyUp, false);
   camera.position.x = cameraOffset.x;
   camera.position.y = cameraOffset.y;
   camera.position.z = cameraOffset.z;
@@ -130,8 +135,8 @@ export default(function CameraControl(camera, property) {
     disableControl: (player) => {
       // disable camera panning via keyboard inputs
       enabled = false;
-      window.removeEventListener('keydown', handleKeyDown, false);
-      window.removeEventListener('keyup', handleKeyUp, false);
+      canvas.removeEventListener('keydown', handleKeyDown, false);
+      canvas.removeEventListener('keyup', handleKeyUp, false);
       
       // camera position jump to player plus some offset (3rd person offset)
       let position = player.position.clone();
@@ -143,8 +148,16 @@ export default(function CameraControl(camera, property) {
     },
     enableControl: () => {
       enabled = true;
-      window.addEventListener('keydown', handleKeyDown, false);
-      window.addEventListener('keyup', handleKeyUp, false);
+      canvas.addEventListener('keydown', handleKeyDown, false);
+      canvas.addEventListener('keyup', handleKeyUp, false);
+    },
+    setEnabled: (value) => {
+      // allows controls to be temporarily disabled/enabled
+      enabled = value;
+      if (value) {
+        // focus on canvas element to allow wasd + arrow keys to work
+        canvas.focus()
+      }
     }
   }
 

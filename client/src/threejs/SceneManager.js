@@ -31,7 +31,7 @@ function initThree(canvas) {
   let mixers = [];
   let clock = new THREE.Clock();
   let property = {
-    'CameraOffset': {
+    'cameraOffset': {
       'x': 0,
       'y': 3,
       'z': 5
@@ -150,7 +150,8 @@ function initThree(canvas) {
         renderer.gammaOutput = true;
 
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        cameraController = CameraControl(camera, property);
+        console.log(renderer.domElement instanceof HTMLCanvasElement);
+        cameraController = CameraControl(camera, renderer.domElement, property);
 
         scene.add(camera);
         console.log(camera);

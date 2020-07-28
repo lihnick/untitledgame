@@ -42,9 +42,10 @@ class GameGraphic extends React.Component {
     }
   }
 
+  // tabindex is used to make any element focusable
   render() {
     return (
-      <canvas ref={this.threeRef}/>
+      <canvas id="canvas" tabIndex="1" ref={this.threeRef}/>
     );
   }
 }
