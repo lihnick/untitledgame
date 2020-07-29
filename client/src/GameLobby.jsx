@@ -1,6 +1,6 @@
 import React from 'react';
 
-class Lobby extends React.Component {
+class GameLobby extends React.Component {
 
   constructor(props) {
     super(props);
@@ -14,8 +14,7 @@ class Lobby extends React.Component {
 
   enterPress(key) {
     if (key.keyCode === 13) {
-      let { setUsername } = this.props.networkService;
-      setUsername(this.state.username);
+      this.props.gameLobbyService.setUsername(this.state.username);
     }
   }
 
@@ -24,12 +23,11 @@ class Lobby extends React.Component {
   }
 
   startGame() {
-    let { startGame } = this.props.networkService;
-    startGame(this.state.username);
+    this.props.gameLobbyService.startGame(this.state.username);
   }
 
   render() {
-    let users = this.props.networkService.getUsers();
+    let users = this.props.gameLobbyService.getUsers();
 
     return (
       <React.Fragment>
@@ -51,4 +49,4 @@ class Lobby extends React.Component {
   }
 }
 
-export default Lobby;
+export default GameLobby;

@@ -1,11 +1,10 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+
 import CameraControl from './CameraControl';
+import GameAsset from './GameAsset';
 
 console.log(THREE);
-const GameAsset = require('./GameAsset');
-
-// let CameraControl = require('./CameraControl');
 
 /* ThreeJS Coordinate System
 +X points to the right of the screen
@@ -270,6 +269,11 @@ function initThree(canvas) {
         )
       });
       console.log(players);
+    },
+    updateInput: (event) => {
+      console.log(event);
+      // need to get reference to current player object
+      // cameraController.disableControl( current player? )
     },
     movePlayer: (data) => {
       console.log(data, players);

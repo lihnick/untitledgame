@@ -46,4 +46,4 @@ const GameAsset = {
     ]
 }
 
-module.exports = GameAsset;
+export default GameAsset;

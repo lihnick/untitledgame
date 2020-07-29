@@ -16,7 +16,7 @@ export default (function CameraControl(camera, domElement, property) {
     panSpeed = property.panSpeed;
   }
 
-  let KEYS = {
+  const KEYS = {
     'ArrowUp': 38,
     'ArrowLeft': 37,
     'ArrowDown': 40,

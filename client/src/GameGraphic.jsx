@@ -1,6 +1,7 @@
 import React from 'react';
 
 import initThree from './threejs/SceneManager';
+import CameraControl from './threejs/CameraControl';
 
 class GameGraphic extends React.Component {
 
@@ -22,7 +23,7 @@ class GameGraphic extends React.Component {
       let context = this.state.three.directionVector();
       console.log(this.props);
       this.props.parentAPI.setDirectionContext(context);
-      this.props.socketEvent$.subscribe({
+      this.props.gameEvent$.subscribe({
         next: (data) => this.processEvent(data)
       });
     });
@@ -35,6 +36,9 @@ class GameGraphic extends React.Component {
       }
       else if ('PlayerMove' === event['type'] && 'id' in event && 'vector' in event) {
         this.state.three.movePlayer(event);
+      }
+      else if ('StartRound' === event['type']) {
+        this.state.three.updateInput(event);
       }
       else {
         console.error('Graphics - Unknown Event:', event);

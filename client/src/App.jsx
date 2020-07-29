@@ -1,6 +1,5 @@
 import React from 'react';
 import { withRouter } from 'react-router';
-
 import { Subject } from 'rxjs';
 
 import GameData from './GameData';
@@ -12,13 +11,13 @@ class App extends React.Component {
     super(props);
     this.state = {
       isLoaded: false,
-      socket$: null
+      eventSubject$: null
     }
   }
 
   componentDidMount() {
     this.setState({
-      socket$: new Subject()
+      eventSubject$: new Subject()
     }, () => {
       let { socket } = Websocket
       socket.onopen = (event) => {
@@ -31,7 +30,7 @@ class App extends React.Component {
         } catch (error) {
           console.error('Parse Error:', message.data);
         }
-        this.state.socket$.next(data);
+        this.state.eventSubject$.next(data);
       }
       socket.onclose = (event) => {
         console.log('Close:', event);
@@ -46,10 +45,11 @@ class App extends React.Component {
   render() {
     return (
       <React.Fragment>
-        { this.state.isLoaded && <GameData {...this.props} socketInterface={Websocket} socket$={this.state.socket$}/> }
+        { this.state.isLoaded && <GameData {...this.props} websocketService={Websocket} eventSubject$={this.state.eventSubject$}/> }
       </React.Fragment>
     );
   }
+
 }
 
 export default withRouter(App);
