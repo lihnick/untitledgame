@@ -132,19 +132,15 @@ export default (function CameraControl(camera, domElement, property) {
       camera.position.add(velocity);
       prevTime = time;
     },
-    disableControl: (player) => {
+    setPosition: (x, y, z) => {
+      console.log(x, y, z);
+      camera.position.set(x, y, z);
+    },
+    disableControl: () => {
       // disable camera panning via keyboard inputs
       enabled = false;
       canvas.removeEventListener('keydown', handleKeyDown, false);
       canvas.removeEventListener('keyup', handleKeyUp, false);
-      
-      // camera position jump to player plus some offset (3rd person offset)
-      let position = player.position.clone();
-      position.add(cameraOffset);
-      camera.set(position.x, position.y, position.z);
-      
-      // camera rotate to look at player, position updates based on player location
-      camera.lookAt(player.position);
     },
     enableControl: () => {
       enabled = true;

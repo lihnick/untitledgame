@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { Subject } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 
 import GameLobby from './GameLobby';
 import UIContainer from './UIContainer';
@@ -43,7 +43,8 @@ class GameData extends React.Component {
     }
     this.eventService = this.eventService.bind(this);
     this.gameLobbyService = this.gameLobbyService.bind(this);
-    this.processMessage = this.processMessage.bind(this);
+    this.storeMessage = this.storeMessage.bind(this);
+    this.transformMessage = this.transformMessage.bind(this);
     this.handleUserInput = this.handleUserInput.bind(this);
   }
 
@@ -77,23 +78,25 @@ class GameData extends React.Component {
     this.setState({
       gameEvent$: new Subject()
     }, () => {
-      this.props.eventSubject$
-        // .pipe(filter(data => ('type' in data && ['AllUser', 'AddUser', 'DelUser'].some(type => (type === data['type'])))))
-        .subscribe({
-          next: (data) => {
-            this.processMessage(data);
-          }
-        });
+      this.props.eventSubject$.
+      pipe(
+        map(data => {
+          this.storeMessage(data);
+          return this.transformMessage(data);
+        }),
+      ).subscribe(this.state.gameEvent$);
+
       this.setState({ isLoaded: true });
-        document.addEventListener('keydown', this.handleUserInput);
+      document.addEventListener('keydown', this.handleUserInput);
     });
   }
 
   componentWillUnmount() {
     document.removeEventListener('keydown', this.handleUserInput);
+    this.state.gameEvent$.complete();
   }
 
-  processMessage(json) {
+  storeMessage(json) {
     if (json && 'type' in json) {
       if ('AllUser' === json['type'] && 'self' in json && 'users' in json) {
         console.log('All User', json['users']);
@@ -119,15 +122,10 @@ class GameData extends React.Component {
         }
       } else if ('StartGame' === json['type'] && 'id' in json && 'map' in json) {
         console.log('Start Game:', json);
-        this.setState({gameStarted: true}, () => {
-          this.state.gameEvent$.next(json);
-        });
+        this.setState({gameStarted: true});
       }
       else if ('StartRound' === json['type'] && 'end' in json && 'round' in json) {
         console.info('Round Started:', json);
-        // update CameraControl to disable pan
-        this.state.gameEvent$.next(json);
-
         this.setState({
           roundStarted: true,
           roundNumber: json['round'],
@@ -135,17 +133,26 @@ class GameData extends React.Component {
         });
       }
       else if ('PlayerMove' === json['type'] && 'id' in json && 'vector' in json) {
-        this.state.gameEvent$.next(json);
       }
       else {
-        console.error('GameData Unknown Data:', json);
+        console.warn('GameData Unknown Data:', json);
       }
     }
+  }
+
+  transformMessage(json) {
+    if (json && 'type' in json) {
+      if ('StartRound' === json['type'] && 'end' in json && 'round' in json) {
+        json['id'] = this.state.self;
+      }
+    }
+    return json;
   }
 
   gameLobbyService() {
     return {
       setUsername: (name) => {
+        console.log('here')
         this.setState({ username: name }, this.props.websocketService.setUsername(name));
       },
       getUsers: () => {
@@ -171,7 +178,7 @@ class GameData extends React.Component {
       <React.Fragment>
         { this.state.isLoaded && !this.state.gameStarted && <GameLobby {...this.props} gameLobbyService={this.gameLobbyService()}/> }
         { this.state.isLoaded &&  <UIContainer {...this.props}/> }
-        {this.state.isLoaded && <GameGraphic {...this.props} gameEvent$={this.state.gameEvent$} parentAPI={this.eventService()}/> }
+        {this.state.isLoaded && <GameGraphic {...this.props} gameEvent$={this.state.gameEvent$} eventService={this.eventService()}/> }
       </React.Fragment>
     );
   }

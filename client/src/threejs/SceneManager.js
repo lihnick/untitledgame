@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 import CameraControl from './CameraControl';
 import GameAsset from './GameAsset';
+import { Camera } from 'three';
 
 console.log(THREE);
 
@@ -109,6 +110,7 @@ function initThree(canvas) {
     
     scene.add(model);
     if (this.type === 'player') {
+      console.log('Adding Player:', players);
       players[this.id] = {'type': this.property['name'], 'glb': glb};
       if ('animate' in this.property) {
         console.log('Animation Found, to be implemented');
@@ -268,10 +270,15 @@ function initThree(canvas) {
           glbLoadedCallback
         )
       });
-      console.log(players);
+      console.log('map loaded players:', players);
     },
-    updateInput: (event) => {
-      console.log(event);
+    toggleInput: (event) => {
+      console.log('Disable control:', event);
+      console.log(players);
+      cameraController.disableControl();
+      let { x, y, z } = players[event['id']].glb.scene.position
+      camera.position.set(x, y, z);
+      // cameraController.setPosition(x, y, z);
       // need to get reference to current player object
       // cameraController.disableControl( current player? )
     },

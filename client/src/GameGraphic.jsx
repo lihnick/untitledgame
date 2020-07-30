@@ -3,6 +3,8 @@ import React from 'react';
 import initThree from './threejs/SceneManager';
 import CameraControl from './threejs/CameraControl';
 
+import { filter, tap } from 'rxjs/operators';
+
 class GameGraphic extends React.Component {
 
   constructor(props) {
@@ -22,27 +24,38 @@ class GameGraphic extends React.Component {
       this.state.three.init();
       let context = this.state.three.directionVector();
       console.log(this.props);
-      this.props.parentAPI.setDirectionContext(context);
-      this.props.gameEvent$.subscribe({
-        next: (data) => this.processEvent(data)
+      this.props.eventService.setDirectionContext(context);
+      this.props.gameEvent$.pipe(
+        filter(event => {
+          if (event && 'type' in event ) {
+            if ('StartGame' === event.type || 'PlayerMove' === event.type || 'StartRound' === event.type) {
+              return true;
+            }
+          }
+          return false;
+        })
+      ).subscribe({
+        next: (data) => {
+          console.log('GameGraphic Event:', data);
+          this.processEvent(data)
+        }
       });
     });
   }
 
   processEvent(event) {
-    if (event && 'type' in event) {
-      if ('StartGame' === event['type'] && 'id' in event && 'map' in event) {
+    switch(event.type) {
+      case 'StartGame':
         this.state.three.loadMap(event);
-      }
-      else if ('PlayerMove' === event['type'] && 'id' in event && 'vector' in event) {
+        break;
+      case 'PlayerMove':
         this.state.three.movePlayer(event);
-      }
-      else if ('StartRound' === event['type']) {
-        this.state.three.updateInput(event);
-      }
-      else {
-        console.error('Graphics - Unknown Event:', event);
-      }
+        break;
+      case 'StartRound':
+        this.state.three.toggleInput(event);
+        break;
+      default:
+        console.warn('Graphics - Unknown Event', event);
     }
   }
 
