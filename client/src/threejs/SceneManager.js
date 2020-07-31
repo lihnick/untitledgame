@@ -30,11 +30,16 @@ function initThree(canvas) {
   let players = {};
   let mixers = [];
   let clock = new THREE.Clock();
-  let property = {
+  let constant = {
     'cameraOffset': {
       'x': 0,
       'y': 3,
       'z': 5
+    },
+    'cameraRotate': {
+      'x': 0,
+      'y': 0,
+      'z': 0
     }
   }
 
@@ -150,9 +155,12 @@ function initThree(canvas) {
         renderer.setClearColor(0x000000, 0.0); // transparent background
         renderer.gammaOutput = true;
 
+        let axis = new THREE.AxesHelper(24);
+        scene.add(axis);
+
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         console.log(renderer.domElement instanceof HTMLCanvasElement);
-        cameraController = CameraControl(camera, renderer.domElement, property);
+        cameraController = CameraControl(camera, renderer.domElement, constant);
 
         scene.add(camera);
         console.log(camera);
@@ -276,8 +284,7 @@ function initThree(canvas) {
       console.log('Disable control:', event);
       console.log(players);
       cameraController.disableControl();
-      let { x, y, z } = players[event['id']].glb.scene.position
-      camera.position.set(x, y, z);
+      cameraController.setPosition(players[event['id']].glb.scene.position);
       // cameraController.setPosition(x, y, z);
       // need to get reference to current player object
       // cameraController.disableControl( current player? )

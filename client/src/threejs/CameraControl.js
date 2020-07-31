@@ -1,19 +1,19 @@
 import * as THREE from 'three';
 
-export default (function CameraControl(camera, domElement, property) {
+export default (function CameraControl(camera, domElement, constant) {
   
   let canvas = domElement;
   let cameraOffset = new THREE.Vector3(0, 3, 5);
-  if ('cameraOffset' in property && 'x' in property.cameraOffset && 'y' in property.cameraOffset && 'z' in property.cameraOffset) {
-    cameraOffset.x = property.cameraOffset.x;
-    cameraOffset.y = property.cameraOffset.y;
-    cameraOffset.z = property.cameraOffset.z;
+  if ('cameraOffset' in constant && 'x' in constant.cameraOffset && 'y' in constant.cameraOffset && 'z' in constant.cameraOffset) {
+    cameraOffset.x = constant.cameraOffset.x;
+    cameraOffset.y = constant.cameraOffset.y;
+    cameraOffset.z = constant.cameraOffset.z;
   }
 
   let enabled = true;
   let panSpeed = 10;
-  if ('panSpeed' in property) {
-    panSpeed = property.panSpeed;
+  if ('panSpeed' in constant) {
+    panSpeed = constant.panSpeed;
   }
 
   const KEYS = {
@@ -114,7 +114,9 @@ export default (function CameraControl(camera, domElement, property) {
   camera.position.x = cameraOffset.x;
   camera.position.y = cameraOffset.y;
   camera.position.z = cameraOffset.z;
-  camera.lookAt(3, 0, 5);
+  camera.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), -Math.PI/2);
+  camera.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), -Math.PI/6);
+  // camera.lookAt(3, 0, 5);
   updateDirectionVector(); 
 
   let api = {
@@ -132,9 +134,22 @@ export default (function CameraControl(camera, domElement, property) {
       camera.position.add(velocity);
       prevTime = time;
     },
-    setPosition: (x, y, z) => {
-      console.log(x, y, z);
-      camera.position.set(x, y, z);
+    setRotation: () => {
+      // reset camera rotation
+      camera.rotation.set(0,0,0);
+      camera.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), -Math.PI / 2);
+      camera.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), -Math.PI / 6);
+
+    },
+    setPosition: (position) => {
+      api.setRotation();
+      camera.position.x = position.x - 5;
+      camera.position.y = position.y + 3;
+      camera.position.z = position.z;
+      // camera.translateY(3);
+      // camera.translateZ(-5);
+      // console.log(x, y, z);
+      // camera.position.set(x, y, z);
     },
     disableControl: () => {
       // disable camera panning via keyboard inputs
