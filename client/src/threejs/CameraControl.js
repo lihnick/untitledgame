@@ -115,7 +115,7 @@ export default (function CameraControl(camera, domElement, constant) {
   camera.position.y = cameraOffset.y;
   camera.position.z = cameraOffset.z;
   camera.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), -Math.PI/2);
-  camera.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), -Math.PI/6);
+  camera.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), -Math.PI/4);
   // camera.lookAt(3, 0, 5);
   updateDirectionVector(); 
 
@@ -138,18 +138,18 @@ export default (function CameraControl(camera, domElement, constant) {
       // reset camera rotation
       camera.rotation.set(0,0,0);
       camera.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), -Math.PI / 2);
-      camera.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), -Math.PI / 6);
-
+      camera.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), -Math.PI / 4);
     },
-    setPosition: (position) => {
-      api.setRotation();
-      camera.position.x = position.x - 5;
-      camera.position.y = position.y + 3;
-      camera.position.z = position.z;
-      // camera.translateY(3);
-      // camera.translateZ(-5);
-      // console.log(x, y, z);
-      // camera.position.set(x, y, z);
+    setPosition: (x, y, z) => {
+      if (!isNaN(x)) {
+        camera.position.x = x - 5;
+      }
+      if (!isNaN(y)) {
+        camera.position.y = y + 4;
+      }
+      if (!isNaN(z)) {
+        camera.position.z = z;
+      }
     },
     disableControl: () => {
       // disable camera panning via keyboard inputs

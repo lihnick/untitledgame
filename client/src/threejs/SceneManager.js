@@ -284,15 +284,14 @@ function initThree(canvas) {
       console.log('Disable control:', event);
       console.log(players);
       cameraController.disableControl();
+      cameraController.setRotation();
       cameraController.setPosition(players[event['id']].glb.scene.position);
-      // cameraController.setPosition(x, y, z);
-      // need to get reference to current player object
-      // cameraController.disableControl( current player? )
     },
     movePlayer: (data) => {
       console.log(data, players);
       players[data['id']].glb.scene.position.x = data['vector'].x;
       players[data['id']].glb.scene.position.z = data['vector'].z;
+      cameraController.setPosition(data['vector'].x, null, data['vector'].z)
     },
     directionVector: () => {
       if (camera) {
