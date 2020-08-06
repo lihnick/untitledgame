@@ -11,6 +11,11 @@ const ws = require('ws');
 const app = express();
 const port = process.env.PORT || 8000;
 
+const constant = {
+    'DefaultGameStartWaitTimeMS': 10000,
+    'DefaultRoundDurationTimeMS': 5 * 60 * 1000,
+}
+
 /*
     client = {
         id1: { id1, username, websocket, position: {x1, z1} },
@@ -147,6 +152,7 @@ wss.on('connection', (ws, req) => {
                         client[key]['websocket'].send(JSON.stringify({
                             'type': 'StartGame',
                             'id': key,
+                            'endTime': Date.now() + constant['DefaultGameStartWaitTimeMS'],
                             'map': GameLevel['ForestLevel'],
                             'players': Object.keys(client)
                                 .filter(key => ('username' in client[key]))
@@ -160,7 +166,7 @@ wss.on('connection', (ws, req) => {
                 if (!lobby['started']) {
                     lobby['started'] = true;
                     lobby['round'] = 1;
-                    lobby['roundEnd'] = Date.now() + 5 * 60 * 60 + 10000;
+                    lobby['roundEnd'] = Date.now() + constant['DefaultRoundDurationTimeMS'] + constant['DefaultGameStartWaitTimeMS'];
                     // Call once to indicate start of the game
                     setTimeout(() => {
                         console.log('Starting Game Round:', lobby['round']);
@@ -169,11 +175,11 @@ wss.on('connection', (ws, req) => {
                                 client[key]['websocket'].send(JSON.stringify({
                                     'type': 'StartRound',
                                     'round': lobby['round'],
-                                    'end': lobby['roundEnd']
+                                    'endTime': lobby['roundEnd']
                                 }));
                             }
                         });
-                    }, 10000);
+                    }, constant['DefaultGameStartWaitTimeMS']);
                 }
             }
             else if ('PlayerMove' == data['type']) {

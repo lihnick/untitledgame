@@ -84,6 +84,11 @@ class GameData extends React.Component {
           this.storeMessage(data);
           return this.transformMessage(data);
         }),
+        tap(data => {
+          if (data && 'type' in data && data['type'] === 'StartRound') {
+            console.log('GameData Tap:', data);
+          }
+        })
       ).subscribe(this.state.gameEvent$);
 
       this.setState({ isLoaded: true });
@@ -98,20 +103,20 @@ class GameData extends React.Component {
 
   storeMessage(json) {
     if (json && 'type' in json) {
-      if ('AllUser' === json['type'] && 'self' in json && 'users' in json) {
+      if ('AllUser' === json['type'] && ['self', 'users'].every(key => key in json)) {
         console.log('All User', json['users']);
         this.setState({
           self: json['self'],
           users: json['users']
         });
       }
-      else if ('AddUser' === json['type'] && 'id' in json && 'username' in json) {
+      else if ('AddUser' === json['type'] && ['id', 'username'].every(key => key in json)) {
         console.log('Add User', json['username']);
         this.setState(prevState => ({
           users: [...prevState.users, { 'id': json['id'], 'username': json['username'] }]
         }));
       }
-      else if ('DelUser' === json['type'] && 'id' in json && 'username' in json) {
+      else if ('DelUser' === json['type'] && ['id', 'username'].every(key => key in json)) {
         console.log('Del User', json['username']);
         let idx = this.state.users.findIndex(user => user['id'] === json['id']);
         console.log(this.state.users, idx);
@@ -120,11 +125,11 @@ class GameData extends React.Component {
           removed.splice(idx, 1);
           this.setState({ users: removed });
         }
-      } else if ('StartGame' === json['type'] && 'id' in json && 'map' in json) {
+      } else if ('StartGame' === json['type'] && ['id', 'map'].every(key => key in json)) {
         console.log('Start Game:', json);
         this.setState({gameStarted: true});
       }
-      else if ('StartRound' === json['type'] && 'end' in json && 'round' in json) {
+      else if ('StartRound' === json['type'] && ['round', 'endTime'].every(key => key in json)) {
         console.info('Round Started:', json);
         this.setState({
           roundStarted: true,
@@ -132,7 +137,7 @@ class GameData extends React.Component {
           roundTimer: json['end']
         });
       }
-      else if ('PlayerMove' === json['type'] && 'id' in json && 'vector' in json) {
+      else if ('PlayerMove' === json['type'] && ['id', 'vector'].every(key => key in json)) {
       }
       else {
         console.warn('GameData Unknown Data:', json);
@@ -142,7 +147,7 @@ class GameData extends React.Component {
 
   transformMessage(json) {
     if (json && 'type' in json) {
-      if ('StartRound' === json['type'] && 'end' in json && 'round' in json) {
+      if ('StartRound' === json['type'] && ['round', 'endTime'].every(key => key in json)) {
         json['id'] = this.state.self;
       }
     }
@@ -177,7 +182,7 @@ class GameData extends React.Component {
     return (
       <React.Fragment>
         { this.state.isLoaded && !this.state.gameStarted && <GameLobby {...this.props} gameLobbyService={this.gameLobbyService()}/> }
-        { this.state.isLoaded &&  <UIContainer {...this.props}/> }
+        { this.state.isLoaded &&  <UIContainer {...this.props} gameEvent$={this.state.gameEvent$}/> }
         {this.state.isLoaded && <GameGraphic {...this.props} gameEvent$={this.state.gameEvent$} eventService={this.eventService()}/> }
       </React.Fragment>
     );
