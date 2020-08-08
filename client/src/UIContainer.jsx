@@ -1,16 +1,18 @@
 import React from 'react';
 
+
 import { filter, tap } from 'rxjs/operators';
+import TimerUI from './component/TimerUI';
 
 class UIContainer extends React.Component {
 
   constructor(props) {
     super(props);
     this.state = {
-      timer: 0
+      seconds: 0
     }
-    this.timerId = 0;
-    this.countDown = this.countDown.bind(this);
+    // this.timerId = 0;
+    // this.countDown = this.countDown.bind(this);
     this.openSettings = this.openSettings.bind(this);
     this.processEvent = this.processEvent.bind(this);
   }
@@ -34,28 +36,20 @@ class UIContainer extends React.Component {
   }
 
   processEvent(event) {
-    console.log('UIContainer:', event);
     if ('StartGame' === event.type) {
       this.setState({
-        timer: (event['endTime'] - Date.now()) / 1000
-      }, () => {
-        this.timerId = setInterval(this.countDown, 1000);
+        seconds: event['endTime'],
+        description: 'Game Starting in '
+      });
+    }
+    if ('StartRound' === event.type) {
+      this.setState({
+        seconds: event['endTime'],
+        description: 'Round Ends in '
       });
     }
   }
 
-  countDown() {
-    // remove one second and set state to trigger re-render
-    let seconds = this.state.timer - 1;
-    this.setState({
-      timer: seconds
-    })
-
-    if (seconds <= 0) {
-      console.log('Stopping Interval');
-      clearInterval(this.timerId);
-    }
-  }
 
   openSettings() {
     console.log('settings to be implemented');
@@ -68,7 +62,8 @@ class UIContainer extends React.Component {
     return (
       <React.Fragment>
         {/* <i className="fa fa-cog fa-4x" style={{"color": "#fff", "position": "absolute", "bottom": 0, "padding": "8px 12px"}} aria-hidden="true" onClick={this.openSettings}></i> */}
-        { <div style={style}>{ Math.round(this.state.timer) }</div>}
+        {/* { <div style={style}>{ Math.round(this.state.timer) }</div>} */}
+        <TimerUI seconds={this.state.seconds} description={this.state.description}></TimerUI>
       </React.Fragment>
     );
   }
