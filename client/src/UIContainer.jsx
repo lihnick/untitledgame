@@ -9,10 +9,9 @@ class UIContainer extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      seconds: 0
+      seconds: 0,
+      description: ''
     }
-    // this.timerId = 0;
-    // this.countDown = this.countDown.bind(this);
     this.openSettings = this.openSettings.bind(this);
     this.processEvent = this.processEvent.bind(this);
   }
@@ -50,19 +49,14 @@ class UIContainer extends React.Component {
     }
   }
 
-
   openSettings() {
     console.log('settings to be implemented');
   }
 
   render() {
-    let style = {
-      'position': 'absolute'
-    }
     return (
       <React.Fragment>
         {/* <i className="fa fa-cog fa-4x" style={{"color": "#fff", "position": "absolute", "bottom": 0, "padding": "8px 12px"}} aria-hidden="true" onClick={this.openSettings}></i> */}
-        {/* { <div style={style}>{ Math.round(this.state.timer) }</div>} */}
         <TimerUI seconds={this.state.seconds} description={this.state.description}></TimerUI>
       </React.Fragment>
     );

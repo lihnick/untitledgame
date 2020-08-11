@@ -55,12 +55,6 @@ function initThree(canvas) {
     renderer.render(scene, camera);
   }
 
-  function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  }
-
   function optimalCameraDirection() {
     // Get the position of the end goal pillar
     let pillarGoal = surface.filter(model => model['type'] === 'Pillar').map(model => (model['glb']['scene'].position));
@@ -160,7 +154,7 @@ function initThree(canvas) {
 
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         console.log(renderer.domElement instanceof HTMLCanvasElement);
-        cameraController = CameraControl(camera, renderer.domElement, constant);
+        cameraController = CameraControl(camera, renderer, constant);
 
         scene.add(camera);
         console.log(camera);
@@ -200,7 +194,6 @@ function initThree(canvas) {
         );
         console.log(terrain, surface);
         animate();
-        window.addEventListener('resize', onWindowResize, false);
       }
     },
     loadGLB: (context, callback) => {

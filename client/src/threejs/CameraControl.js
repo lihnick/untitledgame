@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 
-export default (function CameraControl(camera, domElement, constant) {
+export default (function CameraControl(camera, renderer, constant) {
   
-  let canvas = domElement;
+  let canvas = renderer.domElement;
+
   let cameraOffset = new THREE.Vector3(0, 3, 5);
   if ('cameraOffset' in constant && 'x' in constant.cameraOffset && 'y' in constant.cameraOffset && 'z' in constant.cameraOffset) {
     cameraOffset.x = constant.cameraOffset.x;
@@ -104,22 +105,12 @@ export default (function CameraControl(camera, domElement, constant) {
     }
   }
 
-  if (!(canvas instanceof HTMLCanvasElement)) {
-    canvas = document.getElementById('canvas');
-  }
-  canvas.focus();
-  console.log('initialize camera control');
-  canvas.addEventListener('keydown', handleKeyDown, false);
-  canvas.addEventListener('keyup', handleKeyUp, false);
-  camera.position.x = cameraOffset.x;
-  camera.position.y = cameraOffset.y;
-  camera.position.z = cameraOffset.z;
-  camera.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), -Math.PI/2);
-  camera.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), -Math.PI/4);
-  // camera.lookAt(3, 0, 5);
-  updateDirectionVector(); 
-
   let api = {
+    onWindowResize: () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    },
     update: () => {
       if (!enabled) return;
       // move camera smoothly based on user's performace
@@ -169,8 +160,29 @@ export default (function CameraControl(camera, domElement, constant) {
         // focus on canvas element to allow wasd + arrow keys to work
         canvas.focus()
       }
+    },
+    cleanUp: () => {
+      window.removeEventListener('resize', api.onWindowResize, false);
+      canvas.removeEventListener('keydown', handleKeyDown, false);
+      canvas.removeEventListener('keyup', handleKeyUp, false);
     }
   }
+
+  if (!(canvas instanceof HTMLCanvasElement)) {
+    canvas = document.getElementById('canvas');
+  }
+  canvas.focus();
+  console.log('initialize camera control');
+  canvas.addEventListener('keydown', handleKeyDown, false);
+  canvas.addEventListener('keyup', handleKeyUp, false);
+  camera.position.x = cameraOffset.x;
+  camera.position.y = cameraOffset.y;
+  camera.position.z = cameraOffset.z;
+  camera.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), -Math.PI / 2);
+  camera.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), -Math.PI / 4);
+  // camera.lookAt(3, 0, 5);
+  updateDirectionVector();
+  window.addEventListener('resize', api.onWindowResize, false);
 
   return api;
 });

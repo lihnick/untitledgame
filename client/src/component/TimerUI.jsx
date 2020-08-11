@@ -21,7 +21,10 @@ function TimerUI(props) {
   }, ticking ? 1000 : null);
 
   const style = {
-    'position': 'absolute'
+    'position': 'absolute',
+    'top': '5%',
+    'left': '50%',
+    'transform': 'translate(-50%, -50%)'
   }
   return (
     <React.Fragment>
