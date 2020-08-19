@@ -176,7 +176,7 @@ function initThree(canvas) {
         api.loadGLB(
           {
             'type': 'surface', 
-            'property': GameAsset['Test'][1],
+            'property': GameAsset['Surface'][1],
             'position': { 'x': 3 , 'y': 1, 'z': 5},
             'rotation': { 'x': 0, 'y': 0, 'z': 0 }
           },
@@ -186,7 +186,7 @@ function initThree(canvas) {
         api.loadGLB(
           {
             'type': 'terrain',
-            'property': GameAsset['Terrain'][0],
+            'property': GameAsset['Terrain'][1],
             'position': { 'x': 3, 'y': 0, 'z': 5 },
             'rotation': { 'x': 0, 'y': 0, 'z': 0 }
           },
@@ -253,9 +253,6 @@ function initThree(canvas) {
           }
         }
       }
-      setTimeout(() => {
-        optimalCameraDirection();
-      }, 5000);
 
       data['players'].forEach(player => {
         players[player['id']] = null;
@@ -272,6 +269,11 @@ function initThree(canvas) {
         )
       });
       console.log('map loaded players:', players);
+
+      setTimeout(() => {
+        optimalCameraDirection();
+        
+      }, 4000);
     },
     toggleInput: (event) => {
       console.log('Disable control:', event);

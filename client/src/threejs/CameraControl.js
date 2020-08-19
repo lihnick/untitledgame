@@ -141,6 +141,7 @@ export default (function CameraControl(camera, renderer, constant) {
       if (!isNaN(z)) {
         camera.position.z = z;
       }
+      camera.updateMatrix();
     },
     disableControl: () => {
       // disable camera panning via keyboard inputs
