@@ -280,7 +280,8 @@ function initThree(canvas) {
       console.log(players);
       cameraController.disableControl();
       cameraController.setRotation();
-      cameraController.setPosition(players[event['id']].glb.scene.position);
+      let { x, y, z } = players[event['id']].glb.scene.position;
+      cameraController.setPosition(x, y, z);
     },
     movePlayer: (data) => {
       console.log(data, players);

@@ -132,16 +132,20 @@ export default (function CameraControl(camera, renderer, constant) {
       camera.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), -Math.PI / 4);
     },
     setPosition: (x, y, z) => {
-      if (!isNaN(x)) {
-        camera.position.x = x - 5;
+      if (isNaN(x)) {
+        x = camera.position.x;
+      } else {
+        x = x - 5;
       }
-      if (!isNaN(y)) {
-        camera.position.y = y + 4;
+      if (isNaN(y)) {
+        y = camera.position.y;
+      } else {
+        y = y + 4;
       }
-      if (!isNaN(z)) {
-        camera.position.z = z;
+      if (isNaN(z)) {
+        z = camera.position.z;
       }
-      camera.updateMatrix();
+      camera.position.set(x, y, z);
     },
     disableControl: () => {
       // disable camera panning via keyboard inputs
