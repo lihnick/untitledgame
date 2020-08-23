@@ -3,7 +3,6 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 import CameraControl from './CameraControl';
 import GameAsset from './GameAsset';
-import { Camera } from 'three';
 
 console.log(THREE);
 
@@ -20,7 +19,6 @@ function initThree(canvas) {
   // WORLD_UNIT is divided by the size of the object
   let WORLD_UNIT = 1;
   let scene;
-  let camera;
   let cameraController;
   let loader;
   let renderer;
@@ -48,7 +46,7 @@ function initThree(canvas) {
       item.update(delta);
     });
 
-    renderer.render(scene, camera);
+    renderer.render(scene, cameraController.getCamera());
   }
 
   function optimalCameraDirection() {
@@ -148,7 +146,7 @@ function initThree(canvas) {
         let axis = new THREE.AxesHelper(24);
         scene.add(axis);
 
-        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         console.log(renderer.domElement instanceof HTMLCanvasElement);
         cameraController = CameraControl(camera, renderer, constant);
 
@@ -287,6 +285,7 @@ function initThree(canvas) {
       cameraController.setPosition(data['vector'].x, 1, data['vector'].z)
     },
     directionVector: () => {
+      let camera = cameraController.getCamera();
       if (camera) {
         // The default camera is looking down its negative z-axis, create a point looking in the same direction
         let forward = new THREE.Vector3(0, 0, -1);

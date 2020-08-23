@@ -165,6 +165,9 @@ export default (function CameraControl(camera, renderer, constant) {
       window.removeEventListener('resize', api.onWindowResize, false);
       canvas.removeEventListener('keydown', handleKeyDown, false);
       canvas.removeEventListener('keyup', handleKeyUp, false);
+    },
+    getCamera: () => {
+      return camera;
     }
   }
 
