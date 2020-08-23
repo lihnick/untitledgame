@@ -31,11 +31,7 @@ function initThree(canvas) {
   let mixers = [];
   let clock = new THREE.Clock();
   let constant = {
-    'cameraOffset': {
-      'x': 0,
-      'y': 3,
-      'z': 5
-    },
+    'cameraOffset': new THREE.Vector3(0, 3, 5),
     'cameraRotate': {
       'x': 0,
       'y': 0,
@@ -255,6 +251,7 @@ function initThree(canvas) {
       }
 
       data['players'].forEach(player => {
+        console.log('here', player)
         players[player['id']] = null;
         let callbackContext = {
           'id': player['id'],
@@ -287,7 +284,7 @@ function initThree(canvas) {
       console.log(data, players);
       players[data['id']].glb.scene.position.x = data['vector'].x;
       players[data['id']].glb.scene.position.z = data['vector'].z;
-      cameraController.setPosition(data['vector'].x, null, data['vector'].z)
+      cameraController.setPosition(data['vector'].x, 1, data['vector'].z)
     },
     directionVector: () => {
       if (camera) {

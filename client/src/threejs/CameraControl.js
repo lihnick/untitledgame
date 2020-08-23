@@ -4,12 +4,7 @@ export default (function CameraControl(camera, renderer, constant) {
   
   let canvas = renderer.domElement;
 
-  let cameraOffset = new THREE.Vector3(0, 3, 5);
-  if ('cameraOffset' in constant && 'x' in constant.cameraOffset && 'y' in constant.cameraOffset && 'z' in constant.cameraOffset) {
-    cameraOffset.x = constant.cameraOffset.x;
-    cameraOffset.y = constant.cameraOffset.y;
-    cameraOffset.z = constant.cameraOffset.z;
-  }
+  let cameraOffset = constant.cameraOffset;
 
   let enabled = true;
   let panSpeed = 10;
@@ -140,7 +135,7 @@ export default (function CameraControl(camera, renderer, constant) {
       if (isNaN(y)) {
         y = camera.position.y;
       } else {
-        y = y + 4;
+        y = y + 3;
       }
       if (isNaN(z)) {
         z = camera.position.z;

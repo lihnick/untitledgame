@@ -28,17 +28,18 @@ class GameLobby extends React.Component {
 
   render() {
     let users = this.props.gameLobbyService.getUsers();
+    let keys = Object.keys(users);
 
     return (
       <React.Fragment>
         <div className="center-items">
-          { users.length === 0 &&
+          { keys.length === 0 &&
             <input type="text" onKeyDown={this.enterPress} onChange={this.usernameChange} maxLength="18" placeholder="Nick"/>
           }
-          { users.length > 0 && 
+          { keys.length > 0 && 
             <div className="lobby-container">
-              {users.map((item, index) => {
-                return <div key={index}>{item['username']}</div> 
+              {keys.map(id => {
+                return <div key={id}>{users[id]['username']}</div> 
               })}
               <button onClick={this.startGame}>Start</button>
             </div>

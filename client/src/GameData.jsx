@@ -39,7 +39,7 @@ class GameData extends React.Component {
       directionContext: null,
       self: '',
       username: '',
-      users: []
+      users: {}
     }
     this.eventService = this.eventService.bind(this);
     this.gameLobbyService = this.gameLobbyService.bind(this);
@@ -105,26 +105,36 @@ class GameData extends React.Component {
     if (json && 'type' in json) {
       if ('AllUser' === json['type'] && ['self', 'users'].every(key => key in json)) {
         console.log('All User', json['users']);
+        let allUsers = {};
+        json['users'].forEach(user => {
+          allUsers[user['id']] = user;
+        });
         this.setState({
           self: json['self'],
-          users: json['users']
+          users: allUsers
         });
       }
       else if ('AddUser' === json['type'] && ['id', 'username'].every(key => key in json)) {
         console.log('Add User', json['username']);
-        this.setState(prevState => ({
-          users: [...prevState.users, { 'id': json['id'], 'username': json['username'] }]
-        }));
+        const allUsers = this.state.users;
+        allUsers[json['id']] = {'id': json['id'], 'username': json['username']};
+        this.setState({users: allUsers});
+        // this.setState(prevState => ({
+        //   users: [...prevState.users, { 'id': json['id'], 'username': json['username'] }]
+        // }));
       }
       else if ('DelUser' === json['type'] && ['id', 'username'].every(key => key in json)) {
         console.log('Del User', json['username']);
-        let idx = this.state.users.findIndex(user => user['id'] === json['id']);
-        console.log(this.state.users, idx);
-        if (idx !== -1) {
-          let removed = [...this.state.users];
-          removed.splice(idx, 1);
-          this.setState({ users: removed });
-        }
+        const allUsers = this.state.users;
+        delete allUsers[json['id']];
+        this.setState({users: allUsers});
+        // let idx = this.state.users.findIndex(user => user['id'] === json['id']);
+        // console.log(this.state.users, idx);
+        // if (idx !== -1) {
+        //   let removed = [...this.state.users];
+        //   removed.splice(idx, 1);
+        //   this.setState({ users: removed });
+        // }
       } else if ('StartGame' === json['type'] && ['id', 'map'].every(key => key in json)) {
         console.log('Start Game:', json);
         this.setState({gameStarted: true});
@@ -149,6 +159,11 @@ class GameData extends React.Component {
     if (json && 'type' in json) {
       if ('StartRound' === json['type'] && ['round', 'endTime'].every(key => key in json)) {
         json['id'] = this.state.self;
+      }
+      if ('StartGame' === json['type'] && ['id', 'map'].every(key => key in json)) {
+        // json['players'].map(data => {
+        // });
+        console.log(json, this.state.users);
       }
     }
     return json;
