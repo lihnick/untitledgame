@@ -96,18 +96,11 @@ function initThree(canvas) {
     }
     let model = glb.scene;
     let animations = glb.animations;
-    model.position.copy(this.position);
-    // model.position.set(
-    //   WORLD_UNIT * this.position.x,
-    //   WORLD_UNIT * this.position.y,
-    //   WORLD_UNIT * this.position.z
-    // );
-    console.log('setting rt', model, this);
-    model.rotation.copy(this.rotation);
-    // model.rotation.set(this.rotation.x, this.rotation.y, this.rotation.z);
+
     const scale = WORLD_UNIT / this.property['size'];
+    model.position.copy(this.position);
+    model.rotation.copy(this.rotation);
     model.scale.copy(this.scale).multiplyScalar(scale);
-    // model.scale.set(scale, scale, scale);
     
     scene.add(model);
     if (this.type === 'player') {
@@ -118,7 +111,11 @@ function initThree(canvas) {
       }
     }
     else if (this.type === 'surface') {
-      surface.push({'type': this.property['name'], 'glb': glb});
+      sceneryController.addObject({
+        'name': this.property['name'],
+        'type': this.type,
+        'glb': glb
+      }, this.isVisual);
       if ('animate' in this.property) {
         let mixer = new THREE.AnimationMixer(model);
         let rotateAnim = THREE.AnimationClip.findByName(animations, this.property['animate']);
@@ -128,7 +125,11 @@ function initThree(canvas) {
       }
     }
     else if (this.type === 'terrain') {
-      terrain.push({'type': this.property['name'], 'glb': glb});
+      sceneryController.addObject({
+        'name': this.property['name'],
+        'type': this.type,
+        'glb': glb
+      }, this.isVisual);
       if ('animate' in this.property) {
         console.log('Animation Found, to be implemented');
       }
@@ -219,6 +220,9 @@ function initThree(canvas) {
       // need a function here to add a task that can span temporally to the animate function called by the requestAnimationFrame fucntion
       // rxjs queue? must be synchronous task!
       console.log(data);
+      
+      sceneryController.clearMap(data['map']['size']);
+
       mixers.forEach(item => item.stopAllAction());
       mixers = [];
       terrain.forEach(item => scene.remove(item['glb'].scene));
@@ -251,30 +255,13 @@ function initThree(canvas) {
         }
       }
 
-      playerController = PlayerControl(data['id'], scene, {'WORLD_UNIT': WORLD_UNIT});
+      playerController = PlayerControl(data['id'], scene);
 
       data['players'].forEach(player => {
         let callbackContext = playerController.getCallbackContext(player);
-        api.loadGLB(
-          callbackContext,
-          glbLoadedCallback
-        );
 
-        // console.log('here', player)
-        // players[player['id']] = null;
-        // let callbackContext = {
-        //   'id': player['id'],
-        //   'type': 'player',
-        //   'property': GameAsset['Players'][0],
-        //   'position': { 'x': player.position.x, 'y': 1, 'z': player.position.z },
-        //   'rotation': { 'x': 0, 'y': 0, 'z': 0 },
-        // }
-        // api.loadGLB(
-        //   callbackContext,
-        //   glbLoadedCallback
-        // )
+        api.loadGLB(callbackContext, glbLoadedCallback);
       });
-      console.log('map loaded players:', players, );
 
       setTimeout(() => {
         optimalCameraDirection();

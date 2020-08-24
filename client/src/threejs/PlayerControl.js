@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 import GameAsset from './GameAsset';
 
-export default (function PlayerControl(playerId, scene, constant) {
+export default (function PlayerControl(playerId, scene) {
 
   let playerMap = {};
 
