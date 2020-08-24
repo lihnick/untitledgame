@@ -27,7 +27,6 @@ export default (function SceneryControl(scene) {
       }
     },
     addObject: (object, isVisual) => {
-      console.log(isVisual, object);
       if (isVisual) {
         visuals.push(object);
       }
@@ -40,8 +39,32 @@ export default (function SceneryControl(scene) {
         surface[Math.round(x)][Math.round(z)] = object['glb'];
       }
     },
-    removeObject: (position) => {
-
+    getObject: (position, type) => {
+      let {x, z} = position;
+      if (type === 'terrain') {
+        return terrain[Math.round(x)][Math.round(z)];
+      }
+      else if (type === 'surface') {
+        return surface[Math.round(x)][Math.round(z)];
+      }
+    },
+    removeObject: (position, type) => {
+      let { x, z } = position;
+      if (type === 'terrain') {
+        if (terrain[Math.round(x)][Math.round(z)] !== null) {
+          let tmp = terrain[Math.round(x)][Math.round(z)];
+          scene.remove(tmp.scene);
+          return tmp;
+        }
+      }
+      else if (type === 'surface') {
+        if (surface[Math.round(x)][Math.round(z)] !== null) {
+          let tmp = surface[Math.round(x)][Math.round(z)];
+          scene.remove(tmp.scene);
+          return tmp;
+        }
+      }
+      return null;
     },
     setMapSize: (mapsize) => {
       for (let x = 0; x < mapsize[0]; x++) {
@@ -50,21 +73,24 @@ export default (function SceneryControl(scene) {
       }
     },
     clearMap: (mapsize) => {
+      // remove all terrain objects from the scene
       terrain.forEach(rows => {
         if (Array.isArray(rows)) {
           rows.forEach(item => {
-            scene.remove(item);
+            scene.remove(item.scene);
           });
         }
       });
+      // remove all surface objects from the scene
       surface.forEach(rows => {
         if (Array.isArray(rows)) {
           rows.forEach(item => {
-            scene.remove(item);
+            scene.remove(item.scene);
           });
         }
       });
-      visuals.forEach(item => scene.remove(item));
+      // remove all visual effect objects from the scene
+      visuals.forEach(item => scene.remove(item.scene));
 
       if (mapsize === null) return;
 
@@ -75,11 +101,6 @@ export default (function SceneryControl(scene) {
       }
     }
   };
-
-  // for (let x = 0; x < mapsize[0]; x++) {
-  //   terrain.push(Array(mapsize[1]).fill(null));
-  //   surface.push(Array(mapsize[1]).fill(null));
-  // }
   
   return api;
 
