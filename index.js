@@ -131,7 +131,7 @@ wss.on('connection', (ws, req) => {
                 // Parse the spawn locations available for a given map
                 for (let x = 0; x < GameLevel['ForestLevel']['size'][0]; x++) {
                     for (let z = 0; z < GameLevel['ForestLevel']['size'][1]; z++ ) {
-                        if (GameLevel['ForestLevel']['Terrain'][x][z] === 0) {
+                        if (GameLevel['ForestLevel']['terrain'][x][z] === 0) {
                             lobby['spawn'].push({'x': x, 'z': z});
                         }
                     }

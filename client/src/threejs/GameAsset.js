@@ -1,5 +1,5 @@
 const GameAsset = {
-    'Test': [
+    'test': [
         {
             'name': 'Test',
             'asset': './asset/Pyramid.glb',
@@ -12,14 +12,14 @@ const GameAsset = {
             'size': 2
         }
     ],
-    'Players': [
+    'players': [
         {
             'name': 'Wizard',
             'asset': './asset/Wizard.glb',
             'size': 2
         }
     ],
-    'Terrain': [
+    'terrain': [
         {
             'name': 'Spawn',
             'asset': './asset/Spawn.glb',
@@ -31,7 +31,7 @@ const GameAsset = {
             'size': 2
         }
     ],
-    'Surface': [
+    'surface': [
         {
             'name': 'Pillar',
             'asset': './asset/Pillar.glb',

@@ -2,7 +2,9 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 import CameraControl from './CameraControl';
+import PlayerControl from './PlayerControl';
 import GameAsset from './GameAsset';
+import SceneryControl from './SceneryControl';
 
 console.log(THREE);
 
@@ -25,10 +27,12 @@ function initThree(canvas) {
   let lights = [];
   let terrain = [];
   let surface = [];
+  let sceneryController;
   let players = {};
+  let playerController;
   let mixers = [];
   let clock = new THREE.Clock();
-  let constant = {
+  let cameraConstant = {
     'cameraOffset': new THREE.Vector3(0, 3, 5),
     'cameraRotate': {
       'x': 0,
@@ -92,14 +96,18 @@ function initThree(canvas) {
     }
     let model = glb.scene;
     let animations = glb.animations;
-    model.position.set(
-      WORLD_UNIT * this.position.x,
-      WORLD_UNIT * this.position.y,
-      WORLD_UNIT * this.position.z
-    );
-    model.rotation.set(this.rotation.x, this.rotation.y, this.rotation.z);
+    model.position.copy(this.position);
+    // model.position.set(
+    //   WORLD_UNIT * this.position.x,
+    //   WORLD_UNIT * this.position.y,
+    //   WORLD_UNIT * this.position.z
+    // );
+    console.log('setting rt', model, this);
+    model.rotation.copy(this.rotation);
+    // model.rotation.set(this.rotation.x, this.rotation.y, this.rotation.z);
     const scale = WORLD_UNIT / this.property['size'];
-    model.scale.set(scale, scale, scale);
+    model.scale.copy(this.scale).multiplyScalar(scale);
+    // model.scale.set(scale, scale, scale);
     
     scene.add(model);
     if (this.type === 'player') {
@@ -148,7 +156,7 @@ function initThree(canvas) {
 
         let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         console.log(renderer.domElement instanceof HTMLCanvasElement);
-        cameraController = CameraControl(camera, renderer, constant);
+        cameraController = CameraControl(camera, renderer, cameraConstant);
 
         scene.add(camera);
         console.log(camera);
@@ -167,23 +175,23 @@ function initThree(canvas) {
         
         loader = new GLTFLoader();
 
+        sceneryController = SceneryControl(scene);
+
         api.loadGLB(
-          {
-            'type': 'surface', 
-            'property': GameAsset['Surface'][1],
-            'position': { 'x': 3 , 'y': 1, 'z': 5},
-            'rotation': { 'x': 0, 'y': 0, 'z': 0 }
-          },
+          sceneryController.getCallbackContext({
+            'type': 'surface',
+            'assetIndex': 1,
+            'position': [3, 1, 5]
+          }, true),
           glbLoadedCallback
         );
         
         api.loadGLB(
-          {
+          sceneryController.getCallbackContext({
             'type': 'terrain',
-            'property': GameAsset['Terrain'][1],
-            'position': { 'x': 3, 'y': 0, 'z': 5 },
-            'rotation': { 'x': 0, 'y': 0, 'z': 0 }
-          },
+            'assetIndex': 1,
+            'position': [3, 0, 5]
+          }, true),
           glbLoadedCallback
         );
         console.log(terrain, surface);
@@ -221,49 +229,52 @@ function initThree(canvas) {
 
       for (let x = 0; x < data['map']['size'][0]; x++) {
         for (let z = 0; z < data['map']['size'][1]; z++) {
-          if (data['map']['Terrain'][x][z] >= 0) {
-            let callbackContext = {
+          if (data['map']['terrain'][x][z] >= 0) {
+            
+            let callbackContext = sceneryController.getCallbackContext({
               'type': 'terrain',
-              'property': GameAsset['Terrain'][data['map']['Terrain'][x][z]],
-              'position': { 'x': x, 'y': 0, 'z': z },
-              'rotation': { 'x': 0, 'y': 0, 'z': 0 }
-            }
-            api.loadGLB(
-              callbackContext,
-              glbLoadedCallback
-            );
+              'assetIndex': data['map']['terrain'][x][z],
+              'position': [x, 0, z]
+            }, false);
+
+            api.loadGLB(callbackContext, glbLoadedCallback);
           }
-          if (data['map']['Surface'][x][z] >= 0) {
-            let callbackContext = {
+          if (data['map']['surface'][x][z] >= 0) {
+            let callbackContext = sceneryController.getCallbackContext({
               'type': 'surface',
-              'property': GameAsset['Surface'][data['map']['Surface'][x][z]],
-              'position': { 'x': x, 'y': 1, 'z': z },
-              'rotation': { 'x': 0, 'y': 0, 'z': 0 }
-            }
-            api.loadGLB(
-              callbackContext,
-              glbLoadedCallback
-            );
+              'assetIndex': data['map']['surface'][x][z],
+              'position': [x, 1, z]
+            }, false);
+
+            api.loadGLB(callbackContext, glbLoadedCallback);
           }
         }
       }
 
+      playerController = PlayerControl(data['id'], scene, {'WORLD_UNIT': WORLD_UNIT});
+
       data['players'].forEach(player => {
-        console.log('here', player)
-        players[player['id']] = null;
-        let callbackContext = {
-          'id': player['id'],
-          'type': 'player',
-          'property': GameAsset['Players'][0],
-          'position': { 'x': player.position.x, 'y': 1, 'z': player.position.z },
-          'rotation': { 'x': 0, 'y': 0, 'z': 0 },
-        }
+        let callbackContext = playerController.getCallbackContext(player);
         api.loadGLB(
           callbackContext,
           glbLoadedCallback
-        )
+        );
+
+        // console.log('here', player)
+        // players[player['id']] = null;
+        // let callbackContext = {
+        //   'id': player['id'],
+        //   'type': 'player',
+        //   'property': GameAsset['Players'][0],
+        //   'position': { 'x': player.position.x, 'y': 1, 'z': player.position.z },
+        //   'rotation': { 'x': 0, 'y': 0, 'z': 0 },
+        // }
+        // api.loadGLB(
+        //   callbackContext,
+        //   glbLoadedCallback
+        // )
       });
-      console.log('map loaded players:', players);
+      console.log('map loaded players:', players, );
 
       setTimeout(() => {
         optimalCameraDirection();
