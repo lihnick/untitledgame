@@ -12,6 +12,15 @@ export default (function SceneryControl(scene) {
   let visuals = [];
 
   let api = {
+    getTerrain: () => {
+      return terrain;
+    },
+    getSurface: () => {
+      return surface;
+    },
+    getVisuals: () => {
+      return visuals;
+    },
     getCallbackContext: (objectData, isVisual) => {
       if (!isVisual && objectData['position'].length === 2) {
         if (objectData['type'] === 'terrain') objectData['position'].splice(1, 0, [0]);
@@ -28,7 +37,7 @@ export default (function SceneryControl(scene) {
     },
     addObject: (object, isVisual) => {
       if (isVisual) {
-        visuals.push(object);
+        visuals.push(object['glb']);
       }
       else if (object['type'] === 'terrain') {
         let {x, z} = object['glb'].scene.position;
@@ -92,6 +101,9 @@ export default (function SceneryControl(scene) {
       // remove all visual effect objects from the scene
       visuals.forEach(item => scene.remove(item.scene));
 
+      terrain = [];
+      surface = [];
+      visuals = [];
       if (mapsize === null) return;
 
       // if mapsize is provided then reinitialize data structure after clearing map

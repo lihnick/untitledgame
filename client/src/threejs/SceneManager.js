@@ -220,15 +220,10 @@ function initThree(canvas) {
       // need a function here to add a task that can span temporally to the animate function called by the requestAnimationFrame fucntion
       // rxjs queue? must be synchronous task!
       console.log(data);
-      
       sceneryController.clearMap(data['map']['size']);
 
       mixers.forEach(item => item.stopAllAction());
       mixers = [];
-      terrain.forEach(item => scene.remove(item['glb'].scene));
-      surface.forEach(item => scene.remove(item['glb'].scene));
-      terrain = [];
-      surface = [];
       players = {};
 
       for (let x = 0; x < data['map']['size'][0]; x++) {
