@@ -104,8 +104,14 @@ function initThree(canvas) {
     
     scene.add(model);
     if (this.type === 'player') {
-      console.log('Adding Player:', players);
-      players[this.id] = {'type': this.property['name'], 'glb': glb};
+      console.log('Adding Player:', glb);
+
+      // players[this.id] = {'type': this.property['name'], 'glb': glb};
+      playerController.addPlayer({
+        'id': this.id,
+        'glb': glb
+      });
+
       if ('animate' in this.property) {
         console.log('Animation Found, to be implemented');
       }
@@ -268,14 +274,16 @@ function initThree(canvas) {
       console.log(players);
       cameraController.disableControl();
       cameraController.setRotation();
-      let { x, y, z } = players[event['id']].glb.scene.position;
-      cameraController.setPosition(x, y, z);
+      // let { x, y, z } = playerController.getPlayer(event['id']).scene.position;
+      cameraController.setPosition(playerController.getPlayer(event['id']).scene.position);
     },
     movePlayer: (data) => {
       console.log(data, players);
-      players[data['id']].glb.scene.position.x = data['vector'].x;
-      players[data['id']].glb.scene.position.z = data['vector'].z;
-      cameraController.setPosition(data['vector'].x, 1, data['vector'].z)
+      if (isNaN(data['vector'].y)) {
+        data['vector'].y = 1;
+      }
+      playerController.setPosition(data['id'], data['vector']);
+      cameraController.setPosition(data['vector'])
     },
     directionVector: () => {
       let camera = cameraController.getCamera();

@@ -18,14 +18,31 @@ export default (function PlayerControl(playerId, scene) {
         'scale': new THREE.Vector3(1,1,1)
       }
     },
-    addPlayer: (id, player) => {
-      if (!(id in playerMap)) {
-        playerMap[id] = player;
+    setRotation: () => {
+
+    },
+    setPosition: (playerId, position) => {
+      if (playerId in playerMap) {
+        playerMap[playerId].scene.position.setComponent(0, position.x);
+        playerMap[playerId].scene.position.setComponent(2, position.z);
       }
+    },
+    getPlayer: (playerId) => {
+      return playerMap[playerId];
+    },
+    addPlayer: (player) => {
+      if (player.id in playerMap) {
+        console.warn('Player Id already exists!');
+        console.log('Current Player: ', playerMap[player.id], '\nGiven Player: ', player);
+      }
+      else {
+        playerMap[player.id] = player.glb;
+      } 
     },
     removePlayer: (id) => {
       if (id in playerMap) {
         let tmp = playerMap[id];
+        scene.remove(tmp.scene);
         delete playerMap[id];
         return tmp;
       }
