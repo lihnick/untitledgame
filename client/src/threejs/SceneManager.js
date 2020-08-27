@@ -5,6 +5,7 @@ import CameraControl from './CameraControl';
 import PlayerControl from './PlayerControl';
 import GameAsset from './GameAsset';
 import SceneryControl from './SceneryControl';
+import AnimateControl from './AnimateControl';
 
 console.log(THREE);
 
@@ -28,10 +29,8 @@ function initThree(canvas) {
   let terrain = [];
   let surface = [];
   let sceneryController;
-  let players = {};
   let playerController;
-  let mixers = [];
-  let clock = new THREE.Clock();
+  let animateController;
   let cameraConstant = {
     'cameraOffset': new THREE.Vector3(0, 3, 5),
     'cameraRotate': {
@@ -44,11 +43,8 @@ function initThree(canvas) {
   function animate() {
     requestAnimationFrame(animate);
     
-    let delta = clock.getDelta();
     cameraController.update();
-    mixers.forEach(item => {
-      item.update(delta);
-    });
+    animateController.update();
 
     renderer.render(scene, cameraController.getCamera());
   }
@@ -122,12 +118,8 @@ function initThree(canvas) {
         'type': this.type,
         'glb': glb
       }, this.isVisual);
-      if ('animate' in this.property) {
-        let mixer = new THREE.AnimationMixer(model);
-        let rotateAnim = THREE.AnimationClip.findByName(animations, this.property['animate']);
-        console.log(model, animations, mixer, rotateAnim);
-        mixer.clipAction(rotateAnim).play();
-        mixers.push(mixer);
+      if ('animate' in this.property && animations.length > 0) {
+        animateController.addAnimationMixer(glb, this.property['animate']);
       }
     }
     else if (this.type === 'terrain') {
@@ -182,12 +174,14 @@ function initThree(canvas) {
         
         loader = new GLTFLoader();
 
-        sceneryController = SceneryControl(scene);
+        animateController = AnimateControl();
+        sceneryController = SceneryControl(scene, animateController);
+        playerController = PlayerControl(scene, animateController);
 
         api.loadGLB(
           sceneryController.getCallbackContext({
             'type': 'surface',
-            'assetIndex': 1,
+            'assetIndex': 0,
             'position': [3, 1, 5]
           }, true),
           glbLoadedCallback
@@ -201,7 +195,7 @@ function initThree(canvas) {
           }, true),
           glbLoadedCallback
         );
-        console.log(terrain, surface);
+        console.log(sceneryController.getVisuals());
         animate();
       }
     },
@@ -223,15 +217,10 @@ function initThree(canvas) {
       );
     },
     loadMap: (data) => {
-      // need a function here to add a task that can span temporally to the animate function called by the requestAnimationFrame fucntion
-      // rxjs queue? must be synchronous task!
       console.log(data);
       sceneryController.clearMap(data['map']['size']);
 
-      mixers.forEach(item => item.stopAllAction());
-      mixers = [];
-      players = {};
-
+      // Load scenery objects into the game
       for (let x = 0; x < data['map']['size'][0]; x++) {
         for (let z = 0; z < data['map']['size'][1]; z++) {
           if (data['map']['terrain'][x][z] >= 0) {
@@ -256,11 +245,9 @@ function initThree(canvas) {
         }
       }
 
-      playerController = PlayerControl(data['id'], scene);
-
+      // load player objects into the game
       data['players'].forEach(player => {
         let callbackContext = playerController.getCallbackContext(player);
-
         api.loadGLB(callbackContext, glbLoadedCallback);
       });
 
@@ -271,14 +258,12 @@ function initThree(canvas) {
     },
     toggleInput: (event) => {
       console.log('Disable control:', event);
-      console.log(players);
       cameraController.disableControl();
       cameraController.setRotation();
-      // let { x, y, z } = playerController.getPlayer(event['id']).scene.position;
       cameraController.setPosition(playerController.getPlayer(event['id']).scene.position);
     },
     movePlayer: (data) => {
-      console.log(data, players);
+      console.log(data);
       if (isNaN(data['vector'].y)) {
         data['vector'].y = 1;
       }

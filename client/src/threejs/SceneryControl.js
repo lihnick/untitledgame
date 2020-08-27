@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 import GameAsset from './GameAsset';
 
-export default (function SceneryControl(scene) {
+export default (function SceneryControl(scene, animateController) {
 
   // List of scene objects that players can stand on
   let terrain = [];
@@ -10,6 +10,12 @@ export default (function SceneryControl(scene) {
   let surface = [];
   // visual effect objects to make scene look noice
   let visuals = [];
+
+  function deleteAnimation(glb) {
+    if (glb.animations.length > 0) {
+      animateController.deleteAnimation(glb);
+    }
+  }
 
   let api = {
     getTerrain: () => {
@@ -62,14 +68,18 @@ export default (function SceneryControl(scene) {
       if (type === 'terrain') {
         if (terrain[Math.round(x)][Math.round(z)] !== null) {
           let tmp = terrain[Math.round(x)][Math.round(z)];
+          deleteAnimation(tmp);
           scene.remove(tmp.scene);
+          terrain[Math.round(x)][Math.round(z)] = null;
           return tmp;
         }
       }
       else if (type === 'surface') {
         if (surface[Math.round(x)][Math.round(z)] !== null) {
           let tmp = surface[Math.round(x)][Math.round(z)];
+          deleteAnimation(tmp);
           scene.remove(tmp.scene);
+          surface[Math.round(x)][Math.round(z)] = null;
           return tmp;
         }
       }
@@ -86,6 +96,7 @@ export default (function SceneryControl(scene) {
       terrain.forEach(rows => {
         if (Array.isArray(rows)) {
           rows.forEach(item => {
+            deleteAnimation(item);
             scene.remove(item.scene);
           });
         }
@@ -94,12 +105,16 @@ export default (function SceneryControl(scene) {
       surface.forEach(rows => {
         if (Array.isArray(rows)) {
           rows.forEach(item => {
+            deleteAnimation(item);
             scene.remove(item.scene);
           });
         }
       });
       // remove all visual effect objects from the scene
-      visuals.forEach(item => scene.remove(item.scene));
+      visuals.forEach(item => {
+        deleteAnimation(item);
+        scene.remove(item.scene)
+      });
 
       terrain = [];
       surface = [];
