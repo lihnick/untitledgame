@@ -1,5 +1,18 @@
 import * as THREE from 'three';
 
+const morphingFunctions = {
+  'Grassy': (glb) => {
+    if (glb.userData.name === 'Grassy') {
+      let grass = glb.scene.children.filter(mesh => ('morphTargetInfluences' in mesh))
+      if (Math.random() > 0.85) {
+        grass.forEach(mesh => {
+          mesh.morphTargetInfluences = [Math.random(), Math.random()*(1-0.5)+0.5, Math.random()];
+        });
+      }
+    }
+  }
+}
+
 export default (function AnimateControl() {
   /* Sample mixer structure
   mixers = {
@@ -65,7 +78,9 @@ export default (function AnimateControl() {
       }
     },
     addMorphingTarget: (glb, property) => {
-
+      if ('onStart' in property) {
+        morphingFunctions[glb.userData.name](glb);
+      }
     }
   }
   return api;

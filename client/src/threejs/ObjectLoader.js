@@ -41,6 +41,7 @@ export default (function ObjectLoader(scene, sceneryController, playerController
         console.log('Animation Found, to be implemented');
       }
       if ('shapekey' in this.property) {
+        animateController.addMorphingTarget(glb, this.property['shapekey']);
       }
     }
     else if (this.type === 'surface') {
