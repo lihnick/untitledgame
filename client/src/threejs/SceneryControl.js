@@ -8,8 +8,6 @@ export default (function SceneryControl(scene, animateController) {
   let terrain = [];
   // List of scene objects that are interactive or obstructive
   let surface = [];
-  // visual effect objects to make scene look noice
-  let visuals = [];
 
   function deleteAnimation(glb) {
     if (glb.animations.length > 0) {
@@ -24,108 +22,76 @@ export default (function SceneryControl(scene, animateController) {
     getSurface: () => {
       return surface;
     },
-    getVisuals: () => {
-      return visuals;
-    },
-    getCallbackContext: (objectData, isVisual) => {
-      if (!isVisual && objectData['position'].length === 2) {
+    getCallbackContext: (objectData) => {
+      if (objectData['position'].length === 2) {
         if (objectData['type'] === 'terrain') objectData['position'].splice(1, 0, [0]);
         if (objectData['type'] === 'surface') objectData['position'].splice(1, 0, [1]);
       }
-      return {
-        'type': objectData['type'],
-        'property': GameAsset[objectData['type']][objectData['assetIndex']],
+      let property;
+      if ('name' in objectData) {
+        property = GameAsset
+      }
+      return Object.assign({}, objectData, {
         'position': new THREE.Vector3(...objectData['position']),
         'rotation': new THREE.Euler(0, 0, 0, 'XYZ'),
-        'scale': new THREE.Vector3(1, 1, 1),
-        'isVisual': (isVisual)? true : false
-      }
+        'scale': new THREE.Vector3(1, 1, 1)
+      });
     },
-    addObject: (object, isVisual) => {
-      if (isVisual) {
-        visuals.push(object['glb']);
-      }
-      else if (object['type'] === 'terrain') {
-        let {x, z} = object['glb'].scene.position;
-        terrain[Math.round(x)][Math.round(z)] = object['glb'];
+    addObject: (object) => {
+      if (object['type'] === 'terrain') {
+        terrain.push(object);
       }
       else if (object['type'] === 'surface') {
-        let {x, z} = object['glb'].scene.position;
-        surface[Math.round(x)][Math.round(z)] = object['glb'];
+        surface.push(object);
       }
     },
     getObject: (position, type) => {
       let {x, z} = position;
       if (type === 'terrain') {
-        return terrain[Math.round(x)][Math.round(z)];
+        return terrain.filter(item => (item.scene.position.x === x && item.scene.position.z === z));
       }
       else if (type === 'surface') {
-        return surface[Math.round(x)][Math.round(z)];
+        return surface.filter(item => (item.scene.position.x === x && item.scene.position.z === z));
       }
     },
     removeObject: (position, type) => {
       let { x, z } = position;
+      let tmp = [];
       if (type === 'terrain') {
-        if (terrain[Math.round(x)][Math.round(z)] !== null) {
-          let tmp = terrain[Math.round(x)][Math.round(z)];
-          deleteAnimation(tmp);
-          scene.remove(tmp.scene);
-          terrain[Math.round(x)][Math.round(z)] = null;
-          return tmp;
-        }
+        terrain.forEach(item => {
+          if (item.scene.position.x === x && item.scene.position.z === z) {
+            deleteAnimation(item);
+            scene.remove(item.scene);
+            tmp.push(item);
+          }
+        });
       }
       else if (type === 'surface') {
-        if (surface[Math.round(x)][Math.round(z)] !== null) {
-          let tmp = surface[Math.round(x)][Math.round(z)];
-          deleteAnimation(tmp);
-          scene.remove(tmp.scene);
-          surface[Math.round(x)][Math.round(z)] = null;
-          return tmp;
-        }
+        surface.forEach(item => {
+          if (item.scene.position.x === x && item.scene.position.z === z) {
+            deleteAnimation(item);
+            scene.remove(item.scene);
+            tmp.push(item);
+          }
+        });
       }
-      return null;
+      return tmp;
     },
-    setMapSize: (mapsize) => {
-      for (let x = 0; x < mapsize[0]; x++) {
-        terrain.push(Array(mapsize[1]).fill(null));
-        surface.push(Array(mapsize[1]).fill(null));
-      }
-    },
-    clearMap: (mapsize) => {
+    clearMap: () => {
       // remove all terrain objects from the scene
-      terrain.forEach(rows => {
-        if (Array.isArray(rows)) {
-          rows.forEach(item => {
-            deleteAnimation(item);
-            scene.remove(item.scene);
-          });
-        }
-      });
-      // remove all surface objects from the scene
-      surface.forEach(rows => {
-        if (Array.isArray(rows)) {
-          rows.forEach(item => {
-            deleteAnimation(item);
-            scene.remove(item.scene);
-          });
-        }
-      });
-      // remove all visual effect objects from the scene
-      visuals.forEach(item => {
-        deleteAnimation(item);
-        scene.remove(item.scene)
+      terrain.forEach(item => {
+        deleteAnimation(item.glb);
+        scene.remove(item.glb.scene);
       });
 
+      // remove all surface objects from the scene
+      surface.forEach(item => {
+        deleteAnimation(item.glb);
+        scene.remove(item.glb.scene);
+      });
+      
       terrain = [];
       surface = [];
-      visuals = [];
-      if (mapsize === null) return;
-
-      // if mapsize is provided then reinitialize data structure after clearing map
-      for (let x = 0; x < mapsize[0]; x++) {
-        terrain.push(Array(mapsize[1]).fill(null));
-        surface.push(Array(mapsize[1]).fill(null));
-      }
     }
   };
   

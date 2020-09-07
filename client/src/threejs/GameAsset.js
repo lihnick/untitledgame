@@ -1,9 +1,19 @@
+/*
+    Animation types
+    * onStart
+    * onTrigger
+    Shape Key types
+    * onStart
+    * onTrigger
+ */
 const GameAsset = {
     'test': [
         {
             'name': 'Test',
             'asset': './asset/Pyramid.glb',
-            'animate': 'KeyAction',
+            'animate': {
+                'onStart': ['KeyAction']
+            },
             'size': 2
         },
         {
@@ -28,6 +38,19 @@ const GameAsset = {
         {
             'name': 'Grassy',
             'asset': './asset/Grassy.glb',
+            'shapekey': {
+                'onStart': [
+                    'GrassBlade1.x',
+                    'GrassBlade1.y',
+                    'GrassBlade1.z',
+                    'GrassBlade2.x',
+                    'GrassBlade2.y',
+                    'GrassBlade2.z',
+                    'GrassBlade3.x',
+                    'GrassBlade3.y',
+                    'GrassBlade3.z'
+                ]
+            },
             'size': 2
         }
     ],
@@ -35,7 +58,9 @@ const GameAsset = {
         {
             'name': 'Pillar',
             'asset': './asset/Pillar.glb',
-            'animate': 'PillarAction',
+            'animate': {
+                'onStart': ['PillarAction']
+            },
             'size': 2
         },
         {

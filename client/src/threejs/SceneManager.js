@@ -6,6 +6,7 @@ import PlayerControl from './PlayerControl';
 import GameAsset from './GameAsset';
 import SceneryControl from './SceneryControl';
 import AnimateControl from './AnimateControl';
+import ObjectLoader from './ObjectLoader';
 
 console.log(THREE);
 
@@ -19,18 +20,17 @@ console.log(THREE);
 */
 
 function initThree(canvas) {
-  // WORLD_UNIT is divided by the size of the object
-  let WORLD_UNIT = 1;
+  
   let scene;
   let cameraController;
   let loader;
   let renderer;
   let lights = [];
-  let terrain = [];
-  let surface = [];
   let sceneryController;
   let playerController;
   let animateController;
+  let objectLoader;
+
   let cameraConstant = {
     'cameraOffset': new THREE.Vector3(0, 3, 5),
     'cameraRotate': {
@@ -51,9 +51,9 @@ function initThree(canvas) {
 
   function optimalCameraDirection() {
     // Get the position of the end goal pillar
-    let pillarGoal = surface.filter(model => model['type'] === 'Pillar').map(model => (model['glb']['scene'].position));
-    if (pillarGoal.length > 0) {
-      pillarGoal = pillarGoal[0].clone();
+    let pillarGoal = sceneryController.getSurface().filter(model => model['name'] === 'Pillar')
+    if (pillarGoal) {
+      pillarGoal = pillarGoal[0].glb.scene.position.clone();
     } else {
       console.error('Cannot find pillar');
       return;
@@ -61,7 +61,7 @@ function initThree(canvas) {
     
     // initialize a vector to store the accumulated value and not affect the position of current game spawn
     let initialVec = new THREE.Vector3();
-    let spawns = terrain
+    let spawns = sceneryController.getTerrain()
       .filter(model => model['type'] === 'Spawn')
       .map(model => (model['glb']['scene'].position));
     
@@ -93,7 +93,7 @@ function initThree(canvas) {
     let model = glb.scene;
     let animations = glb.animations;
 
-    const scale = WORLD_UNIT / this.property['size'];
+    const scale = 1 / this.property['size'];
     model.position.copy(this.position);
     model.rotation.copy(this.rotation);
     model.scale.copy(this.scale).multiplyScalar(scale);
@@ -173,29 +173,26 @@ function initThree(canvas) {
         scene.add(lights[3]);
         
         loader = new GLTFLoader();
-
-        animateController = AnimateControl();
+        
+        animateController = AnimateControl(scene);
         sceneryController = SceneryControl(scene, animateController);
         playerController = PlayerControl(scene, animateController);
+        // Once an object is loaded, its reference will be needed by controllers for updates
+        objectLoader = ObjectLoader(scene, sceneryController, playerController, animateController);
 
-        api.loadGLB(
-          sceneryController.getCallbackContext({
-            'type': 'surface',
-            'assetIndex': 0,
-            'position': [3, 1, 5]
-          }, true),
-          glbLoadedCallback
-        );
-        
-        api.loadGLB(
-          sceneryController.getCallbackContext({
-            'type': 'terrain',
-            'assetIndex': 1,
-            'position': [3, 0, 5]
-          }, true),
-          glbLoadedCallback
-        );
-        console.log(sceneryController.getVisuals());
+        objectLoader.loadObject({
+          'type': 'terrain',
+          'name': 'Grassy',
+          'position': [3, 0, 5]
+        });
+
+        objectLoader.loadObject({
+          'type': 'surface',
+          'name': 'Pillar',
+          'position': [3, 1, 5]
+        });
+
+        console.log(sceneryController.getTerrain(), sceneryController.getSurface());
         animate();
       }
     },
@@ -218,38 +215,9 @@ function initThree(canvas) {
     },
     loadMap: (data) => {
       console.log(data);
-      sceneryController.clearMap(data['map']['size']);
-
-      // Load scenery objects into the game
-      for (let x = 0; x < data['map']['size'][0]; x++) {
-        for (let z = 0; z < data['map']['size'][1]; z++) {
-          if (data['map']['terrain'][x][z] >= 0) {
-            
-            let callbackContext = sceneryController.getCallbackContext({
-              'type': 'terrain',
-              'assetIndex': data['map']['terrain'][x][z],
-              'position': [x, 0, z]
-            }, false);
-
-            api.loadGLB(callbackContext, glbLoadedCallback);
-          }
-          if (data['map']['surface'][x][z] >= 0) {
-            let callbackContext = sceneryController.getCallbackContext({
-              'type': 'surface',
-              'assetIndex': data['map']['surface'][x][z],
-              'position': [x, 1, z]
-            }, false);
-
-            api.loadGLB(callbackContext, glbLoadedCallback);
-          }
-        }
-      }
-
-      // load player objects into the game
-      data['players'].forEach(player => {
-        let callbackContext = playerController.getCallbackContext(player);
-        api.loadGLB(callbackContext, glbLoadedCallback);
-      });
+      // Clear maps and sets the map size
+      sceneryController.clearMap();
+      objectLoader.loadBatchObject(data);
 
       setTimeout(() => {
         optimalCameraDirection();
